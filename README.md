@@ -9,7 +9,7 @@ Added playernames and ready state to the basic lobby and a chat window.
 Just attach UILobby.cs & UnityNetworkManager.cs to an empty GameObject and set the public parameter "Game Name". 
 Example in scene Lobby.unity
 
-####Todo / Next Steps:
+####Still in development / Todo:
 ***
 - Protect created host server with a password:
   - pw textfield for host create form
