@@ -34,14 +34,16 @@ namespace Goga {
 
         public string gameName;
         public string playerName;
-
+        public bool isConnecting;
+        
         public Dictionary<string, UnityNetworkPlayer> connectedPlayers = new Dictionary<string, UnityNetworkPlayer>();
         public List<LobbyChatMessage> lobbyChat = new List<LobbyChatMessage>();
 
         private NetworkPeerType lastPeerType;
         public event ChangedCliendState newState;
 
-        HostData[] lobbyList;
+        public HostData[] lobbyList;
+        private HostData actualHost = null;
 
         private JsonReader jReader = new JsonReader();
         private JsonWriter jWriter = new JsonWriter();
@@ -56,11 +58,27 @@ namespace Goga {
             // create empty lobbylist
             lobbyList = new HostData[]{};
 
-            // default player name
+            // defaults
             this.playerName = "MaxMuster";
+            this.isConnecting = false;
         }
 
         #region getter & setter
+        
+        // get name of joined server
+        public HostData GetActualHost() {
+            return this.actualHost;
+        }
+
+        // set name of joined server
+        public void SetActualHost(HostData host) {
+            this.actualHost = host;
+        }
+
+        // additional connecting function since NetworkPeerType.Connecting is not working
+        public void SetIsConnecting(bool state) {
+            this.isConnecting = state;
+        }
 
         // get peerType
         public NetworkPeerType GetPeerType() {
@@ -165,6 +183,16 @@ namespace Goga {
         // register a new server to the master server
         public void RegisterGame(string name, string comment, float playerSize) {
 
+            this.SetIsConnecting(true);
+
+            // create host entry
+            HostData tmpHost = new HostData();
+            tmpHost.gameName = name;
+            tmpHost.comment = comment;
+            tmpHost.playerLimit = (int)playerSize;
+
+            this.SetActualHost(tmpHost);
+
             // Use NAT punchthrough if no public IP present
             Network.InitializeServer((int)playerSize-1, 25002, !Network.HavePublicAddress());
             MasterServer.RegisterHost(this.gameName, name, comment);
@@ -188,7 +216,9 @@ namespace Goga {
 
         public void ConnectPeer(HostData host){
 
+            this.SetIsConnecting(true);
             Network.Connect(host);
+            this.SetActualHost(host);
         }
 
         #region RPC call functions
@@ -274,7 +304,13 @@ namespace Goga {
 
             this.connectedPlayers.Clear();
             this.lobbyChat.Clear();
+            this.SetActualHost(null);
             Debug.Log("CleanUp done..");
+        }
+
+        void OnServerInitialized() {
+     
+            this.SetIsConnecting(false);
         }
 
         void OnConnectedToServer() {
@@ -286,6 +322,18 @@ namespace Goga {
             string _hostJson = jWriter.Write(_host);
 
             networkView.RPC("RegisterPlayerOnServer", RPCMode.Server, _hostJson);
+
+            this.SetIsConnecting(false);
+        }
+
+        void OnDisconnectedFromServer() {
+            this.SetIsConnecting(false);
+            this.SetActualHost(null);
+        }
+
+        void OnFailedToConnect() {
+            this.SetIsConnecting(false);
+            this.SetActualHost(null);
         }
 
         void OnPlayerConnected(NetworkPlayer player) {

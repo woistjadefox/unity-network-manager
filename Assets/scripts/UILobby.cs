@@ -68,6 +68,15 @@ public class UILobby : MonoBehaviour {
 
         }
 
+        // connecting window
+        if (uNet.GetPeerType() == NetworkPeerType.Connecting || uNet.isConnecting) {
+            GUILayout.Window(97, new Rect((Screen.width) - 260, (Screen.height) - 110, 250, 50), (int windowID) => {
+
+                GUILayout.Box("<b>Connecting...</b>", GUILayout.MaxWidth(250));
+
+            }, "Connecting", GUILayout.MaxWidth(250), GUILayout.MaxHeight(200));
+        }
+
         // lobby window
         lobbyWin = GUILayout.Window(50, lobbyWin, (int windowID) => {
 
@@ -85,16 +94,16 @@ public class UILobby : MonoBehaviour {
             foreach (HostData host in uNet.GetLobbyList()) {
 
                 GUILayout.BeginHorizontal();
-                
+
                 GUILayout.Box("<b>" + host.gameName + "</b>");
 
                 if (host.comment != "") {
                     GUILayout.Box("<b>" + host.comment + "</b>");
                 }
 
-                GUILayout.Box("<b>" +host.connectedPlayers + " / " + host.playerLimit + "</b>", GUILayout.MaxWidth(50));
+                GUILayout.Box("<b>" + host.connectedPlayers + " / " + host.playerLimit + "</b>", GUILayout.MaxWidth(50));
 
-                if (uNet.GetPeerType() == NetworkPeerType.Disconnected && host.connectedPlayers < host.playerLimit) {
+                if (uNet.GetPeerType() == NetworkPeerType.Disconnected && !uNet.isConnecting && host.connectedPlayers < host.playerLimit) {
                     if (GUILayout.Button("join", GUILayout.MaxWidth(80))) {
                         this.Join(host);
                     }
@@ -109,9 +118,11 @@ public class UILobby : MonoBehaviour {
 
         }, "Lobby", GUILayout.Height(50), GUILayout.MinWidth(400));
 
+        
+
 
         // new game window
-        if (uNet.GetPeerType() == NetworkPeerType.Disconnected) {
+        if (uNet.GetPeerType() == NetworkPeerType.Disconnected && !uNet.isConnecting) {
 
             GUILayout.Window(51, new Rect(paddingLeft, lobbyWin.height + 20, 300, 125), (int windowID) => {
 
@@ -119,6 +130,7 @@ public class UILobby : MonoBehaviour {
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Gamename:", GUILayout.MaxWidth(80));
+                GUI.SetNextControlName("GamenameForm");
                 formGamename = GUILayout.TextField(formGamename, 30, GUILayout.MaxWidth(195));
                 GUILayout.EndHorizontal();
 
@@ -133,11 +145,12 @@ public class UILobby : MonoBehaviour {
      
                 GUILayout.EndHorizontal();
 
-                if (GUILayout.Button("create", GUILayout.MaxWidth(80))) {
+                if (GUILayout.Button("create", GUILayout.MaxWidth(80)) || Event.current.isKey && Event.current.keyCode == KeyCode.Return) {
 
                     if (formGamename == "") {
                         this._errorString = "choose a right Gamename!";
                     } else {
+
                         this.CreateGame(formGamename, formComment, this.defaultPlayerSize);
                         this._errorString = "";
                     }
@@ -151,10 +164,10 @@ public class UILobby : MonoBehaviour {
         }
 
         // actual game window & chat
-        if (uNet.GetPeerType() == NetworkPeerType.Client || uNet.GetPeerType() == NetworkPeerType.Server) {
+        if (uNet.GetPeerType() == NetworkPeerType.Client || uNet.GetPeerType() == NetworkPeerType.Server && !uNet.isConnecting) {
 
             // actual game window
-            GUILayout.Window(52, new Rect(paddingLeft, lobbyWin.height + 20, 295, 100), (int windowID) => {
+            GUILayout.Window(52, new Rect(paddingLeft, lobbyWin.height + 20, 295, 180), (int windowID) => {
 
                 // title & disconnect button
                 GUILayout.BeginHorizontal();
@@ -168,8 +181,10 @@ public class UILobby : MonoBehaviour {
                 GUILayout.EndHorizontal();
 
 
+
                 // list players
                 if (uNet.connectedPlayers.Count > 0) {
+
                     foreach (UnityNetworkPlayer player in uNet.connectedPlayers.Values) {
 
                         GUILayout.BeginHorizontal();
@@ -189,7 +204,12 @@ public class UILobby : MonoBehaviour {
                     }
                 }
 
-                // ready button
+
+            }, uNet.GetActualHost().gameName, GUILayout.MinWidth(300), GUILayout.MinHeight(180));
+
+            // ready button
+            GUILayout.BeginArea(new Rect(paddingLeft, lobbyWin.height + 205, 100, 30));
+
                 if (uNet.GetNetworkPlayer().ready) {
                     _readyState = "I'm not ready";
                 }
@@ -201,12 +221,18 @@ public class UILobby : MonoBehaviour {
                     uNet.ToggleNetworkPlayerReadyState();
                 }
 
-            }, "Actual Game", GUILayout.MinWidth(300));
+            GUILayout.EndArea();
 
             // chat window
             GUILayout.Window(53, new Rect(paddingLeft + 310, lobbyWin.height + 20, 295, 150), (int windowID) => {
 
                 chatScrollPosition = GUILayout.BeginScrollView(chatScrollPosition, GUILayout.MinHeight(150));
+
+                // autoscroll if new content is here
+                if (_chatCounter < uNet.lobbyChat.Count) {
+                    chatScrollPosition.y = Mathf.Infinity;
+                    _chatCounter = uNet.lobbyChat.Count;
+                }
 
                 foreach (LobbyChatMessage msg in uNet.lobbyChat) {
                     string _color = "teal";
@@ -219,40 +245,44 @@ public class UILobby : MonoBehaviour {
                 }
 
                 GUILayout.EndScrollView();
-
-                GUILayout.BeginHorizontal();
-                
-                GUI.SetNextControlName("ChatForm");
-                _chatForm = GUILayout.TextField(_chatForm, GUILayout.MaxWidth(215));
-
-                if (GUILayout.Button("send", GUILayout.MaxWidth(40)) || GUI.GetNameOfFocusedControl() == "ChatForm" && Event.current.isKey && Event.current.keyCode == KeyCode.Return) {
-                    
-                    uNet.SendLobbyChatMessage(_chatForm);
-                    _chatForm = "";
-                    GUI.FocusWindow(53);
-                    GUI.FocusControl("ChatForm");
-                }
-
-                GUILayout.EndHorizontal();
-
-                if (_chatCounter < uNet.lobbyChat.Count) {
-                    chatScrollPosition.y = Mathf.Infinity;
-                    _chatCounter = uNet.lobbyChat.Count;
-                }
-
+ 
             }, "Chat", GUILayout.MinWidth(290));
 
+            // chat form input
+            GUILayout.BeginArea(new Rect(paddingLeft + 345, lobbyWin.height + 205, 285, 30));
+            GUILayout.BeginHorizontal();
+
+            GUI.SetNextControlName("ChatForm");
+            _chatForm = GUILayout.TextField(_chatForm, 100, GUILayout.MaxWidth(215));
+
+            if (GUILayout.Button("send", GUILayout.MaxWidth(40)) || GUI.GetNameOfFocusedControl() == "ChatForm" && Event.current.isKey && Event.current.keyCode == KeyCode.Return) {
+
+                uNet.SendLobbyChatMessage(_chatForm);
+                _chatForm = "";
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
         }
 
 
         // nickname window
-        GUILayout.Window(54, new Rect(Screen.width - 150, 10, 140, 50), (int windowID) => {
+        GUILayout.Window(55, new Rect(Screen.width - 150, 10, 140, 50), (int windowID) => {
 
             GUILayout.BeginHorizontal();
 
+            GUI.SetNextControlName("NameForm");
             _nickname = GUILayout.TextField(_nickname, 20, GUILayout.MaxWidth(85));
 
-            if (GUILayout.Button("ok", GUILayout.MaxWidth(25))) {
+            if (UnityEngine.Event.current.type == EventType.Repaint) {
+                if (GUI.GetNameOfFocusedControl() == "NameForm") {
+                    if (_nickname == "MaxMuster") {
+                        _nickname = "";
+                    }
+                }
+            }
+
+            if (GUILayout.Button("ok", GUILayout.MaxWidth(25)) || GUI.GetNameOfFocusedControl() == "NameForm" && Event.current.isKey && Event.current.keyCode == KeyCode.Return) {
 
                 if (_nickname != uNet.playerName && _nickname != "" && _nickname != "MaxMuster" && _nickname.Length > 2) {
                     
@@ -312,6 +342,7 @@ public class UILobby : MonoBehaviour {
     public void CreateGame(string name, string comment, float playerSize) {
 
         uNet.RegisterGame(name, comment, playerSize);
+        uNet.UpdateHostList();
     }
 
     public void Join(HostData host) {
@@ -320,5 +351,6 @@ public class UILobby : MonoBehaviour {
 
     public void Disconnect() {
         uNet.DisconnectPeer();
+        uNet.UpdateHostList();
     }
 }
