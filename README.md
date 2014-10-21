@@ -4,14 +4,18 @@ UnityNetworkManager
 A simple network manager for the build-in RakNet client in Unity + a simple GUI for a lobby.
 Added playernames and ready state to the basic lobby and a chat window. 
 
-
-TODO:
+####Installation:
 ***
-Protect created host server with a password:
-- pw textfield for host create form
-- pw textfield for join host 
-- setting parameters in UnityNetworkManager.ConnectPeer() & UnityNetworkManager.RegisterGame()
+Just attach UILobby.cs & UnityNetworkManager.cs to an empty GameObject and set the public parameter "Game Name". 
+Example in scene Lobby.unity
 
-Scrollbar for all connected players in the actual game window
+####Todo / Next Steps:
+***
+- Protect created host server with a password:
+  - pw textfield for host create form
+  - pw textfield for join host 
+  - setting parameters in UnityNetworkManager.ConnectPeer() & UnityNetworkManager.RegisterGame()
 
-LAN Autodiscovery for local network games
+- Scrollbar for all connected players in the actual game window
+
+- LAN Autodiscovery for local network games
