@@ -27,11 +27,12 @@ namespace Goga {
     }
 
     public delegate void ChangedCliendState(NetworkPeerType state);
+    public delegate void OnAllPlayersReady();
 
     [RequireComponent(typeof(NetworkView))]
-
     public class UnityNetworkManager : MonoBehaviour {
 
+        public int serverPort = 25002;
         public string gameName;
         public string playerName;
         public bool isConnecting;
@@ -41,9 +42,13 @@ namespace Goga {
 
         private NetworkPeerType lastPeerType;
         public event ChangedCliendState newState;
+        public event OnAllPlayersReady onAllPlayersReady;
+        private bool allPlayersReady;
 
+        public bool isLanOnly = false;
         public HostData[] lobbyList;
         private HostData actualHost = null;
+        private HostDataLAN actualHostLAN = null;
 
         private JsonReader jReader = new JsonReader();
         private JsonWriter jWriter = new JsonWriter();
@@ -70,9 +75,19 @@ namespace Goga {
             return this.actualHost;
         }
 
+        // get name of joined server
+        public HostDataLAN GetActualHostLAN() {
+            return this.actualHostLAN;
+        }
+
         // set name of joined server
         public void SetActualHost(HostData host) {
             this.actualHost = host;
+        }
+
+        // set name of joined lan server
+        public void SetActualHostLAN(HostDataLAN host) {
+            this.actualHostLAN = host;
         }
 
         // additional connecting function since NetworkPeerType.Connecting is not working
@@ -130,6 +145,19 @@ namespace Goga {
             }
         }
 
+        // get ping of player
+        public int GetNetworkPlayerPing(UnityNetworkPlayer player) {
+
+            for (int i = 0; i < Network.connections.Length; i++) {
+
+                if (player.guid == Network.connections[i].guid) {
+                    return Network.GetLastPing(Network.connections[i]);
+                }
+            }
+
+            return 0;
+        }
+
         // toggle player ready state
         public void ToggleNetworkPlayerReadyState() {
 
@@ -151,7 +179,25 @@ namespace Goga {
             if (this.lastPeerType != Network.peerType){
                 this.StateChanged();
             }
+        }
 
+        void FixedUpdate() {
+
+            // check if all players are ready
+            if (Network.peerType == NetworkPeerType.Server) {
+
+                if (this.AllPlayersReadyCheck()) {
+
+                    if (!allPlayersReady) {
+
+                        this.allPlayersReady = true;
+                        this.onAllPlayersReady();
+                    }
+
+                } else {
+                    this.allPlayersReady = false;
+                }
+            }
         }
 
         // get new hostlist data from master server
@@ -180,22 +226,53 @@ namespace Goga {
             this.lastPeerType = Network.peerType;
         }
 
+        // check if all palyers are ready
+        bool AllPlayersReadyCheck() {
+
+            foreach (UnityNetworkPlayer player in this.connectedPlayers.Values) {
+
+                if (!player.ready) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         // register a new server to the master server
-        public void RegisterGame(string name, string comment, float playerSize) {
+        public void RegisterGame(bool lan, string name, string comment, float playerSize) {
 
             this.SetIsConnecting(true);
 
-            // create host entry
-            HostData tmpHost = new HostData();
-            tmpHost.gameName = name;
-            tmpHost.comment = comment;
-            tmpHost.playerLimit = (int)playerSize;
+            // register game to master server if it's not lan only
+            if (lan) {
 
-            this.SetActualHost(tmpHost);
+                this.isLanOnly = true;
 
-            // Use NAT punchthrough if no public IP present
-            Network.InitializeServer((int)playerSize-1, 25002, !Network.HavePublicAddress());
-            MasterServer.RegisterHost(this.gameName, name, comment);
+                HostDataLAN tmpHost = new HostDataLAN("empty");
+                tmpHost.gameName = name;
+                tmpHost.comment = comment;
+                tmpHost.playerLimit = (int)playerSize;
+
+                this.SetActualHostLAN(tmpHost);
+
+                Network.InitializeServer((int)playerSize - 1, this.serverPort, false);
+            
+            } else {
+
+                // create host entry
+                HostData tmpHost = new HostData();
+                tmpHost.gameName = name;
+                tmpHost.comment = comment;
+                tmpHost.playerLimit = (int)playerSize;
+
+                this.SetActualHost(tmpHost);
+
+                // Use NAT punchthrough if no public IP present
+                Network.InitializeServer((int)playerSize - 1, this.serverPort, !Network.HavePublicAddress());
+                MasterServer.RegisterHost(this.gameName, name, comment);
+            }
+
 
             UnityNetworkPlayer _serverHost = new UnityNetworkPlayer();
             _serverHost.guid = Network.player.guid;
@@ -219,6 +296,12 @@ namespace Goga {
             this.SetIsConnecting(true);
             Network.Connect(host);
             this.SetActualHost(host);
+        }
+
+        public void ConnectPeerLAN(HostDataLAN host) {
+            this.SetIsConnecting(true);
+            Network.Connect(host.ip, host.port);
+            this.SetActualHostLAN(host);
         }
 
         #region RPC call functions
@@ -305,6 +388,8 @@ namespace Goga {
             this.connectedPlayers.Clear();
             this.lobbyChat.Clear();
             this.SetActualHost(null);
+            this.SetActualHostLAN(null);
+            this.isLanOnly = false;
             Debug.Log("CleanUp done..");
         }
 
@@ -327,13 +412,16 @@ namespace Goga {
         }
 
         void OnDisconnectedFromServer() {
+
             this.SetIsConnecting(false);
             this.SetActualHost(null);
+            this.SetActualHostLAN(null);
         }
 
         void OnFailedToConnect() {
             this.SetIsConnecting(false);
             this.SetActualHost(null);
+            this.SetActualHostLAN(null);
         }
 
         void OnPlayerConnected(NetworkPlayer player) {

@@ -7,6 +7,7 @@ public class UILobby : MonoBehaviour {
 
     // network handler
     public UnityNetworkManager uNet;
+    public UnityNetworkDiscovery uDiscovery;
     public int minPlayers = 2;
     public int maxPlayers = 32;
     public int defaultPlayerSize = 2;
@@ -14,6 +15,7 @@ public class UILobby : MonoBehaviour {
     public int paddingLeft = 120;
     public int paddingTop = 10;
 
+    private bool lanGame = false;
     private string formGamename = "";
     private string formComment = "";
 
@@ -22,17 +24,18 @@ public class UILobby : MonoBehaviour {
     private Vector2 lobbyScrollPosition = Vector2.zero;
     private Vector2 chatScrollPosition = Vector2.zero;
 
+    private bool joinedLanGame = false;
     private string _nickname = "MaxMuster";
     private string _readyState;
     private string _errorString = "";
-
+    private string _actualGameName = "";
     private string _chatForm = "";
-
     private int _chatCounter = 0;
 
 	void Start () {
 
-        uNet.newState += new ChangedCliendState(OnStateChange);
+        uNet.newState           += new ChangedCliendState(OnStateChange);
+        uNet.onAllPlayersReady  += new OnAllPlayersReady(OnAllPlayersReady);
 
         lobbyWin = new Rect(paddingLeft, paddingTop, 600, 50);
 	}
@@ -80,11 +83,12 @@ public class UILobby : MonoBehaviour {
         // lobby window
         lobbyWin = GUILayout.Window(50, lobbyWin, (int windowID) => {
 
+            // internet hosts
             if (uNet.GetLobbyList().Length > 0) {
-                GUILayout.Label("Available Games");
+                GUILayout.Label("Available Internet Games");
             }
             else {
-                GUILayout.Label("No open Games available");
+                GUILayout.Label("No open Internet Games available");
             }
 
             if (lobbyWin.height > 200) {
@@ -112,6 +116,38 @@ public class UILobby : MonoBehaviour {
                 GUILayout.EndHorizontal();
             }
 
+            // lan discovery hosts
+            if (uDiscovery.GetLanHostData().Length > 0) {
+                GUILayout.Label("Available LAN Games");
+            }
+            else {
+                GUILayout.Label("No open LAN Games available");
+            }
+
+            foreach (HostDataLAN host in uDiscovery.GetLanHostData()) {
+
+                GUILayout.BeginHorizontal();
+
+                GUILayout.Box("<b>" + host.gameName + "</b>");
+
+                if (host.comment != "") {
+                    GUILayout.Box("<b>" + host.comment + "</b>");
+                }
+
+                GUILayout.Box("<b>" + host.connectedPlayers + " / " + host.playerLimit + "</b>", GUILayout.MaxWidth(50));
+
+                if (uNet.GetPeerType() == NetworkPeerType.Disconnected && !uNet.isConnecting && host.connectedPlayers < host.playerLimit) {
+                    if (GUILayout.Button("join", GUILayout.MaxWidth(80))) {
+                        this.JoinLAN(host);
+                    }
+                }
+
+                GUILayout.EndHorizontal();
+            }
+
+
+
+
             if (lobbyWin.height > 200) {
                 GUILayout.EndScrollView();
             }
@@ -129,6 +165,11 @@ public class UILobby : MonoBehaviour {
                 GUILayout.BeginVertical(GUILayout.MaxWidth(300));
 
                 GUILayout.BeginHorizontal();
+                GUILayout.Label("LAN only", GUILayout.MaxWidth(80));
+                lanGame = GUILayout.Toggle(lanGame, "");
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
                 GUILayout.Label("Gamename:", GUILayout.MaxWidth(80));
                 GUI.SetNextControlName("GamenameForm");
                 formGamename = GUILayout.TextField(formGamename, 30, GUILayout.MaxWidth(195));
@@ -136,6 +177,7 @@ public class UILobby : MonoBehaviour {
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Comment:", GUILayout.MaxWidth(80));
+                GUI.SetNextControlName("CommentForm");
                 formComment = GUILayout.TextField(formComment, 45, GUILayout.MaxWidth(195));
                 GUILayout.EndHorizontal();
 
@@ -145,13 +187,13 @@ public class UILobby : MonoBehaviour {
      
                 GUILayout.EndHorizontal();
 
-                if (GUILayout.Button("create", GUILayout.MaxWidth(80)) || Event.current.isKey && Event.current.keyCode == KeyCode.Return) {
+                if (GUILayout.Button("create", GUILayout.MaxWidth(80))) {
 
                     if (formGamename == "") {
                         this._errorString = "choose a right Gamename!";
                     } else {
 
-                        this.CreateGame(formGamename, formComment, this.defaultPlayerSize);
+                        this.CreateGame(lanGame, formGamename, formComment, this.defaultPlayerSize);
                         this._errorString = "";
                     }
                     
@@ -165,6 +207,13 @@ public class UILobby : MonoBehaviour {
 
         // actual game window & chat
         if (uNet.GetPeerType() == NetworkPeerType.Client || uNet.GetPeerType() == NetworkPeerType.Server && !uNet.isConnecting) {
+
+
+            if (this.joinedLanGame) {
+                _actualGameName = uNet.GetActualHostLAN().gameName;
+            } else {
+                _actualGameName = uNet.GetActualHost().gameName;
+            }
 
             // actual game window
             GUILayout.Window(52, new Rect(paddingLeft, lobbyWin.height + 20, 295, 180), (int windowID) => {
@@ -196,6 +245,8 @@ public class UILobby : MonoBehaviour {
                             GUILayout.Box(player.name);
                         }
 
+                        GUILayout.Box(uNet.GetNetworkPlayerPing(player).ToString());
+
                         if (player.ready) {
                             GUILayout.Box("<b><color=green>ready</color></b>", GUILayout.MaxWidth(45));
                         }
@@ -205,7 +256,7 @@ public class UILobby : MonoBehaviour {
                 }
 
 
-            }, uNet.GetActualHost().gameName, GUILayout.MinWidth(300), GUILayout.MinHeight(180));
+            }, _actualGameName, GUILayout.MinWidth(300), GUILayout.MinHeight(180));
 
             // ready button
             GUILayout.BeginArea(new Rect(paddingLeft, lobbyWin.height + 205, 100, 30));
@@ -222,6 +273,7 @@ public class UILobby : MonoBehaviour {
                 }
 
             GUILayout.EndArea();
+            
 
             // chat window
             GUILayout.Window(53, new Rect(paddingLeft + 310, lobbyWin.height + 20, 295, 150), (int windowID) => {
@@ -263,6 +315,7 @@ public class UILobby : MonoBehaviour {
 
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
+            
         }
 
 
@@ -314,34 +367,47 @@ public class UILobby : MonoBehaviour {
         {
 
             case NetworkPeerType.Server:
-
-                //Debug.Log("I am a server");
                 break;
 
             case NetworkPeerType.Client:
-
-                //Debug.Log("I am a client");
                 break;
 
 
             case NetworkPeerType.Connecting:
-
-                //Debug.Log("I am connecting");
                 break;
 
             case NetworkPeerType.Disconnected:
 
                 this._chatCounter = 0;
-
-                //Debug.Log("I am diconnected");
+                this.joinedLanGame = false;
                 break;
         }
 
     }
 
-    public void CreateGame(string name, string comment, float playerSize) {
+    void OnAllPlayersReady() {
 
-        uNet.RegisterGame(name, comment, playerSize);
+        if (Network.peerType == NetworkPeerType.Server) {
+            
+            if (uNet.connectedPlayers.Count >= this.minPlayers) {
+
+                Debug.Log("all players are ready");
+                GameObject.Find("_Logic").GetComponent<Logic>().StartGame();
+
+            }
+            else {
+                this._errorString = "At least "+this.minPlayers+" players needed to start a game";
+            }
+        }
+    }
+
+    public void CreateGame(bool lan, string name, string comment, float playerSize) {
+
+        if (lan) {
+            this.joinedLanGame = true;
+        }
+
+        uNet.RegisterGame(lan, name, comment, playerSize);
         uNet.UpdateHostList();
     }
 
@@ -349,7 +415,13 @@ public class UILobby : MonoBehaviour {
         uNet.ConnectPeer(host);
     }
 
+    public void JoinLAN(HostDataLAN host) {
+        this.joinedLanGame = true;
+        uNet.ConnectPeerLAN(host);
+    }
+
     public void Disconnect() {
+        this.joinedLanGame = false;
         uNet.DisconnectPeer();
         uNet.UpdateHostList();
     }
