@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using JsonFx.Json;
 
 
-namespace Goga {
+namespace Goga.UnityNetwork {
 
     public class UnityNetworkPlayer {
         public string guid;
@@ -243,6 +243,9 @@ namespace Goga {
         public void RegisterGame(bool lan, string name, string comment, float playerSize) {
 
             this.SetIsConnecting(true);
+
+            // set security
+            Network.InitializeSecurity();
 
             // register game to master server if it's not lan only
             if (lan) {

@@ -1,96 +1,115 @@
 ﻿using UnityEngine;
 using System.Collections;
-
+using Goga.UnityNetwork;
 
 public enum PlayerMovementState {
     Idle, Up, Down, Left, Right
 }
 
-[RequireComponent(typeof(NetworkView))]
 public class PlayerEngine : MonoBehaviour {
 
+    private UnityNetworkObject uNetObj;
+    public float predictionOffset = 0f;
     public float walkSpeed = 3f;
-    public float positionErrorThreshold = 0.2f;
-    public float positionCorrectionSpeed = 5f;
     public Color[] colors;
-
-    private NetworkPlayer owner;
-    public string playerId;
-
-    public Vector3 serverPos;
-    public Quaternion serverRot;
 
     private PlayerMovementState movementState;
     private PlayerMovementState lastMovementState;
 
+    internal struct PlayerInput {
+        internal double timestamp;
+        internal PlayerMovementState state;
+    }
+
+    private PlayerInput[] inputBuffer = new PlayerInput[20];
+
+    void SaveNewInput(PlayerMovementState state) {
+
+        // Shift the buffer sideways, deleting state 20
+        for (int i = inputBuffer.Length - 1; i >= 1; i--) {
+            inputBuffer[i] = inputBuffer[i - 1];
+        }
+
+        PlayerInput input;
+        input.timestamp = Network.time;
+        input.state = state;
+
+        inputBuffer[0] = input;
+
+        this.movementState = state;
+    }
+
+    void CheckInterpolation() {
+
+        if (this.inputBuffer[0].timestamp > uNetObj.lastDataTime + predictionOffset) {
+
+            for (int i = 0; i < this.inputBuffer.Length; i++) {
+
+                if (this.inputBuffer[i].timestamp <= uNetObj.lastDataTime + predictionOffset) {
+
+
+                    this.movementState = this.inputBuffer[i].state;
+                    transform.position = Vector3.Lerp(transform.position, uNetObj.lastPos, 5f * Time.fixedDeltaTime);
+
+                    return;
+                }
+            }
+        }
+    }
+
 	// Use this for initialization
 	void Start () {
 
+        this.uNetObj = this.GetComponent<UnityNetworkObject>();
         renderer.material.color = colors[Random.Range(0, colors.Length)];
 	}
 
-    void FixedUpdate() {
-        
-        this.playerId = this.owner.guid;
+    void Update() {
 
-        if (Network.player == this.owner) {
+        /*
+        if (Network.player == uNetObj.GetOwner() && Network.isClient) {
+            CheckInterpolation();
+        }
+        */
+    }
+
+    void FixedUpdate() {
+
+        if (Network.player == uNetObj.GetOwner()) {
 
             if (Network.peerType == NetworkPeerType.Client) {
                 this.CheckInputClient();
-                //this.LerpToTarget();
             }
 
 
             if (Network.peerType == NetworkPeerType.Server) {
                 this.CheckInputServer();
-            
             }
         }
 
         this.MovementStateMachine();
     }
 
-    public void LerpToTarget() {
-
-        // check if server pos is already here
-        if (this.serverPos == null || serverRot == null) {
-            return;
-        }
-
-        float distance = Vector3.Distance(transform.position, serverPos);
-
-        //only correct if the error margin (the distance) is too extreme
-        if (distance >= this.positionErrorThreshold) {
-
-            //Debug.Log("position correction working... (distance difference:"+distance+")");
-
-            float lerp = (((1 / distance) * this.positionCorrectionSpeed) * Time.fixedDeltaTime);
-
-            transform.position = Vector3.Lerp(transform.position, serverPos, lerp);
-            transform.rotation = Quaternion.Slerp(transform.rotation, serverRot, lerp);
-        }
-    }
-
     void CheckInputClient() {
 
         if (Input.GetKey(KeyCode.UpArrow)) {
             this.SendInput(0);
-            this.movementState = PlayerMovementState.Up;
+            this.SaveNewInput(PlayerMovementState.Up);
         }
 
         if (Input.GetKey(KeyCode.DownArrow)) {
             this.SendInput(1);
-            this.movementState = PlayerMovementState.Down;
+            this.SaveNewInput(PlayerMovementState.Down);
         }
 
         if (Input.GetKey(KeyCode.LeftArrow)) {
             this.SendInput(2);
-            this.movementState = PlayerMovementState.Left;
+            this.SaveNewInput(PlayerMovementState.Left);
         }
 
         if (Input.GetKey(KeyCode.RightArrow)) {
             this.SendInput(3);
-            this.movementState = PlayerMovementState.Right;
+            this.SaveNewInput(PlayerMovementState.Right);
         }
     }
 
@@ -152,6 +171,7 @@ public class PlayerEngine : MonoBehaviour {
         networkView.RPC("ReceiveInput", RPCMode.Server, input);
     }
 
+    /*
     public NetworkPlayer GetOwner() {
         return this.owner;
     }
@@ -169,6 +189,7 @@ public class PlayerEngine : MonoBehaviour {
         this.owner = player;
 
     }
+    */
 
     // server: receive movementState of client
     [RPC]

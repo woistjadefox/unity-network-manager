@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Goga;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,7 +7,7 @@ using System.Net.Sockets;
 using System.Text;
 using JsonFx.Json;
 
-namespace Goga {
+namespace Goga.UnityNetwork {
 
     public class HostDataLAN {
 
@@ -50,7 +49,7 @@ namespace Goga {
 
         void Start() {
 
-            uNet.newState += new ChangedCliendState(OnStateChange);
+            this.uNet.newState += new ChangedCliendState(OnStateChange);
             this.StartReceivingIp();
         }
 

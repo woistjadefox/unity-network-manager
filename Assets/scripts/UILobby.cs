@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using Goga;
+using Goga.UnityNetwork;
 
 public class UILobby : MonoBehaviour {
 
