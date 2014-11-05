@@ -1,12 +1,18 @@
 UnityNetworkManager
 ===================
 
-A simple network manager for the build-in RakNet client in Unity + a simple GUI for a lobby.
-Added playernames and ready state to the basic lobby and a chat window. 
+A simple network manager for the build-in RakNet client in Unity + a simple GUI for the lobby management.
+
+Features: 
+- Lobby with chat
+- Manager takes care of playername changes and ready state changes
+- LAN Autodiscovery for local network games
+- Smiple Prediction (Interpolation & Extrapolation)
+- Rigidbody support
 
 ####Installation:
 ***
-Just attach UILobby.cs & UnityNetworkManager.cs to an empty GameObject and set the public parameter "Game Name". 
+Just attach UILobby.cs, UnityNetworkManager.cs & UnityNetworkDiscovery.cs to an empty GameObject and set the public parameter "Game Name". 
 Example in scene Lobby.unity
 
 ####Still in development / Todo:
@@ -17,5 +23,8 @@ Example in scene Lobby.unity
   - setting parameters in UnityNetworkManager.ConnectPeer() & UnityNetworkManager.RegisterGame()
 
 - Scrollbar for all connected players in the actual game window
+- Connection retry if NAT punchthrough doesn't work the first time
 
-- LAN Autodiscovery for local network games
+####Support:
+***
+- LAN Autodiscovery doesn't work in Webplayer since Webplayer can't send UDP Broadcasts
