@@ -12,9 +12,9 @@ GameObject:
   - 65: {fileID: 6500000}
   - 23: {fileID: 2300000}
   - 148: {fileID: 14800000}
+  - 114: {fileID: 11400004}
   - 114: {fileID: 11400002}
   - 114: {fileID: 11400000}
-  - 114: {fileID: 11400004}
   m_Layer: 0
   m_Name: player
   m_TagString: Untagged
@@ -119,9 +119,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6deb2d41f53f4141ab82234f72276dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerId: 
-  lastDataTime: 0
-  lastPos: {x: 0, y: 0, z: 0}
+  playerGuid: 
 --- !u!148 &14800000
 NetworkView:
   m_ObjectHideFlags: 1

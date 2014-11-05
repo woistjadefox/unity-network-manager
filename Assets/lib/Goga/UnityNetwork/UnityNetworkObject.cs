@@ -6,27 +6,22 @@ namespace Goga.UnityNetwork {
     [RequireComponent(typeof(NetworkView))]
     public class UnityNetworkObject : MonoBehaviour {
 
-        private NetworkPlayer owner;
-        public string playerId;
-        public double lastDataTime;
-        public Vector3 lastPos;
+        public string playerGuid;
 
-        public NetworkPlayer GetOwner() {
-            return this.owner;
+        public bool IsMine() {
+
+            if (Network.player.guid == this.playerGuid) {
+                return true;
+            }
+
+            return false;
         }
 
         // set the owner of the object
         [RPC]
-        public void SetOwner(NetworkPlayer player) {
+        public void SetOwner(string guid) {
 
-            if (Network.peerType == NetworkPeerType.Client) {
-                Debug.Log("CLIENT: RPC SetOwner came in with playerid:" + player.guid);
-            } else {
-                Debug.Log("SERVER: RPC SetOwner came in with playerid:" + player.guid);
-            }
-
-            this.owner = player;
-            this.playerId = this.owner.guid;
+            this.playerGuid = guid;
 
         }
     }

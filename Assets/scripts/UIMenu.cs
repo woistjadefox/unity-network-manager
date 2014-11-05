@@ -1,9 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Goga.UnityNetwork;
 
 public class UIMenu : MonoBehaviour {
 
-    public UILobby lobby;
+    public UnityNetworkLobby lobby;
 
     private bool menuActive = true;
 

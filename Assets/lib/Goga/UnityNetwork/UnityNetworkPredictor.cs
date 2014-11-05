@@ -72,12 +72,6 @@ namespace Goga.UnityNetwork {
                     stream.Serialize(ref angularVelocity);
                 }
 
-                // save last data timestamp
-                if (uNetObj) {
-                    uNetObj.lastDataTime = info.timestamp;
-                    uNetObj.lastPos = pos;
-                }
-
                 // Shift the buffer sideways, deleting state 20
                 for (int i = m_BufferedState.Length - 1; i >= 1; i--) {
                     m_BufferedState[i] = m_BufferedState[i - 1];
@@ -133,7 +127,7 @@ namespace Goga.UnityNetwork {
 
             
             // if its rigidbody continue, if not, check if you are the owner and lerp to target
-            if (Network.player == this.uNetObj.GetOwner() && !rigidbody && Network.isClient) {
+            if (this.uNetObj.IsMine() && !rigidbody && Network.isClient) {
 
                 if (!this.clientSideInterpolation) {
 

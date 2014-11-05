@@ -6,8 +6,11 @@ public enum PlayerMovementState {
     Idle, Up, Down, Left, Right
 }
 
+[RequireComponent(typeof(UnityNetworkObject))]
+
 public class PlayerEngine : MonoBehaviour {
 
+    private UnityNetworkManager uNet;
     private UnityNetworkObject uNetObj;
     public bool allowLocalMovement = true;
     public float walkSpeed = 3f;
@@ -21,6 +24,7 @@ public class PlayerEngine : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
+        this.uNet = FindObjectOfType <UnityNetworkManager>();
         this.uNetObj = this.GetComponent<UnityNetworkObject>();
         renderer.material.color = colors[Random.Range(0, colors.Length)];
 	}
@@ -28,7 +32,7 @@ public class PlayerEngine : MonoBehaviour {
     void FixedUpdate() {
 
 
-        if (Network.player == uNetObj.GetOwner()) {
+        if (this.uNetObj.IsMine()) {
             this.CheckInput();
         }
     }
@@ -118,10 +122,14 @@ public class PlayerEngine : MonoBehaviour {
 
     void OnGUI() {
 
+        // show player name on top of player
+        Vector3 playerScreenPos = Camera.main.WorldToScreenPoint(transform.position);
+        playerScreenPos.y = Screen.height - playerScreenPos.y;
+
         if (this.showMoveCount) {
-            Vector3 playerScreenPos = Camera.main.WorldToScreenPoint(transform.position);
-            playerScreenPos.y = Screen.height - playerScreenPos.y;
             GUI.Box(new Rect(playerScreenPos.x, playerScreenPos.y, 100, 40), "moves:" + this._moveCount);
+        } else {
+            GUI.Box(new Rect(playerScreenPos.x, playerScreenPos.y, 100, 40), this.uNet.GetNetworkPlayer(uNetObj.playerGuid).name);
         }
 
     }

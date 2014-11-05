@@ -133,7 +133,7 @@ namespace Goga.UnityNetwork {
             return _tmpEntries;
         }
 
-        // get player object
+        // get own player object
         public UnityNetworkPlayer GetNetworkPlayer() {
 
             if (this.connectedPlayers.ContainsKey(Network.player.guid)) {
@@ -141,6 +141,17 @@ namespace Goga.UnityNetwork {
 
             }
             else {
+                return new UnityNetworkPlayer() { guid = "0", name = "000", ready = false };
+            }
+        }
+
+        // get specific player object
+        public UnityNetworkPlayer GetNetworkPlayer(string guid) {
+
+            if (this.connectedPlayers.ContainsKey(guid)) {
+                return this.connectedPlayers[guid];
+
+            } else {
                 return new UnityNetworkPlayer() { guid = "0", name = "000", ready = false };
             }
         }
@@ -384,16 +395,38 @@ namespace Goga.UnityNetwork {
             lobbyChat.Add(_msg);
         }
 
+        /*
+        [RPC]
+        void InstantiateObj(string playerObj) {
+
+            UnityNetworkPlayer _player = jReader.Read<UnityNetworkPlayer>(playerObj);
+
+            if (!this.connectedPlayers.ContainsKey(_player.guid)) {
+
+                this.connectedPlayers.Add(_player.guid, _player);
+            }
+        }*/
+
         #endregion RPC functions
 
         void CleanUp() {
 
+            this.RemoveAllNetworkObjects();
             this.connectedPlayers.Clear();
             this.lobbyChat.Clear();
             this.SetActualHost(null);
             this.SetActualHostLAN(null);
             this.isLanOnly = false;
             Debug.Log("CleanUp done..");
+        }
+
+        void RemoveAllNetworkObjects() {
+
+            UnityNetworkObject[] playerObjs = FindObjectsOfType(typeof(UnityNetworkObject)) as UnityNetworkObject[];
+
+            foreach (UnityNetworkObject obj in playerObjs) {
+                Destroy(obj.gameObject);
+            }
         }
 
         void OnServerInitialized() {
@@ -447,8 +480,20 @@ namespace Goga.UnityNetwork {
         void OnPlayerDisconnected(NetworkPlayer player) {
 
             networkView.RPC("RemoveConnectedPlayer", RPCMode.All, player.guid);
-            Network.RemoveRPCs(player);
-            Network.DestroyPlayerObjects(player);
+
+            UnityNetworkObject[] playerObjs = FindObjectsOfType<UnityNetworkObject>() as UnityNetworkObject[];
+            
+            foreach (UnityNetworkObject obj in playerObjs) {
+
+                if (obj.playerGuid == player.guid) {
+
+                    Network.RemoveRPCs(obj.networkView.viewID);
+                    Network.Destroy(obj.networkView.viewID);
+                }
+
+            }
+
+            //Network.DestroyPlayerObjects(player);
         }
 
         void OnDisable() {
