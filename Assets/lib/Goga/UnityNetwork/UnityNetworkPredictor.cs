@@ -6,14 +6,17 @@ namespace Goga.UnityNetwork {
 
     public class UnityNetworkPredictor : MonoBehaviour {
 
+        public bool clientSideInterpolation = false;
         public double m_InterpolationBackTime = 0.1;
         public double m_ExtrapolationLimit = 0.5;
+
         public float positionCorrectionThreshold = 0.2f;
         public float positionCorrectionSpeed = 1.5f;
 
         private UnityNetworkObject uNetObj;
 
         internal struct State {
+
             internal double timestamp;
             internal Vector3 pos;
             internal Vector3 velocity;
@@ -128,11 +131,15 @@ namespace Goga.UnityNetwork {
                 return;
             }
 
+            
             // if its rigidbody continue, if not, check if you are the owner and lerp to target
             if (Network.player == this.uNetObj.GetOwner() && !rigidbody && Network.isClient) {
 
-                this.LerpToTarget(pos, rot);
-                return;
+                if (!this.clientSideInterpolation) {
+
+                    this.LerpToTarget(pos, rot);
+                    return;
+                }
             }
 
 

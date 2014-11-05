@@ -84,7 +84,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e832f50e1e8a634197e21569e5663ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  allowLocalMovement: 1
   walkSpeed: 5.5
+  showMoveCount: 0
   colors:
   - {r: .911764681, g: .0670415312, b: .0670415312, a: 0}
   - {r: .217861831, g: .45588237, b: .124026828, a: 0}
@@ -101,10 +103,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a3b29559a2a0894c9a0855801494c66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  clientSideInterpolation: 0
   m_InterpolationBackTime: .05000000074505806
   m_ExtrapolationLimit: .5
   positionCorrectionThreshold: .150000006
-  positionCorrectionSpeed: 1.5
+  positionCorrectionSpeed: 1
 --- !u!114 &11400004
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -117,6 +120,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerId: 
+  lastDataTime: 0
+  lastPos: {x: 0, y: 0, z: 0}
 --- !u!148 &14800000
 NetworkView:
   m_ObjectHideFlags: 1
