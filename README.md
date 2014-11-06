@@ -28,3 +28,7 @@ Example in scene Lobby.unity
 ####Support:
 ***
 - LAN Autodiscovery doesn't work in Webplayer since Webplayer can't send UDP Broadcasts
+
+####Copyright & license:
+***
+Code released under [the MIT license](LICENSE).

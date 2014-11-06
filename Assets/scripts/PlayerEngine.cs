@@ -10,7 +10,6 @@ public enum PlayerMovementState {
 
 public class PlayerEngine : MonoBehaviour {
 
-    private UnityNetworkManager uNet;
     private UnityNetworkObject uNetObj;
     public bool allowLocalMovement = true;
     public float walkSpeed = 3f;
@@ -24,7 +23,6 @@ public class PlayerEngine : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-        this.uNet = FindObjectOfType <UnityNetworkManager>();
         this.uNetObj = this.GetComponent<UnityNetworkObject>();
         renderer.material.color = colors[Random.Range(0, colors.Length)];
 	}
@@ -129,7 +127,7 @@ public class PlayerEngine : MonoBehaviour {
         if (this.showMoveCount) {
             GUI.Box(new Rect(playerScreenPos.x, playerScreenPos.y, 100, 40), "moves:" + this._moveCount);
         } else {
-            GUI.Box(new Rect(playerScreenPos.x, playerScreenPos.y, 100, 40), this.uNet.GetNetworkPlayer(uNetObj.playerGuid).name);
+            GUI.Box(new Rect(playerScreenPos.x, playerScreenPos.y, 100, 40), this.uNetObj.GetManager().GetNetworkPlayer(this.uNetObj.playerGuid).name);
         }
 
     }
