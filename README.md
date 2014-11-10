@@ -31,4 +31,4 @@ Example in scene Lobby.unity
 
 ####Copyright & license:
 ***
-Code released under [the MIT license](LICENSE).
+Code released under [the Apache License 2.0](LICENSE).
