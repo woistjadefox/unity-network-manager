@@ -6,7 +6,7 @@ using Goga.UnityNetwork;
 
 public class Logic : MonoBehaviour {
 
-    public UnityNetworkManager uNet;
+    public Manager uNet;
     public GameObject prefabPlayer;
 
     private bool gameRunning;
@@ -32,7 +32,7 @@ public class Logic : MonoBehaviour {
 
 
             // instantiate client players
-            foreach (UnityNetworkPlayer player in uNet.connectedPlayers.Values) {
+            foreach (NetPlayer player in uNet.connectedPlayers.Values) {
 
                 GameObject _player = Network.Instantiate(this.prefabPlayer, new Vector3(Random.Range(-8, 4), 0.6f, Random.Range(0, 5)), Quaternion.identity, 0) as GameObject;
 

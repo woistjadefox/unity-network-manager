@@ -7,19 +7,19 @@ using JsonFx.Json;
 
 namespace Goga.UnityNetwork {
 
-    public class UnityNetworkPlayer {
+    public class NetPlayer {
         public string guid;
         public string name;
         public bool ready = false;
     }
 
-    public class LobbyChatMessage {
+    public class LobbyMessage {
 
         public string author;
         public string content;
         public DateTime date;
 
-        public LobbyChatMessage(string content) {
+        public LobbyMessage(string content) {
             this.content = content;
             this.date = DateTime.Now;
         }
@@ -30,15 +30,20 @@ namespace Goga.UnityNetwork {
     public delegate void OnAllPlayersReady();
 
     [RequireComponent(typeof(NetworkView))]
-    public class UnityNetworkManager : MonoBehaviour {
+    public class Manager : MonoBehaviour {
 
         public int serverPort = 25002;
         public string gameName;
         public string playerName;
         public bool isConnecting;
+        public string onlineCheckIp = "8.8.8.8"; // google dns server
+        public float onlineCheckRate = 10f;
+        public int onlineCheckPing;
+        public bool isOnline;
+
         
-        public Dictionary<string, UnityNetworkPlayer> connectedPlayers = new Dictionary<string, UnityNetworkPlayer>();
-        public List<LobbyChatMessage> lobbyChat = new List<LobbyChatMessage>();
+        public Dictionary<string, NetPlayer> connectedPlayers = new Dictionary<string, NetPlayer>();
+        public List<LobbyMessage> lobbyChat = new List<LobbyMessage>();
 
         private NetworkPeerType lastPeerType;
         public event ChangedCliendState newState;
@@ -66,6 +71,9 @@ namespace Goga.UnityNetwork {
             // defaults
             this.playerName = "MaxMuster";
             this.isConnecting = false;
+            this.isOnline = false;
+
+            StartCoroutine(CheckInternetConnection());
         }
 
         #region getter & setter
@@ -134,30 +142,30 @@ namespace Goga.UnityNetwork {
         }
 
         // get own player object
-        public UnityNetworkPlayer GetNetworkPlayer() {
+        public NetPlayer GetNetworkPlayer() {
 
             if (this.connectedPlayers.ContainsKey(Network.player.guid)) {
                 return this.connectedPlayers[Network.player.guid];
 
             }
             else {
-                return new UnityNetworkPlayer() { guid = "0", name = "000", ready = false };
+                return new NetPlayer() { guid = "0", name = "000", ready = false };
             }
         }
 
         // get specific player object
-        public UnityNetworkPlayer GetNetworkPlayer(string guid) {
+        public NetPlayer GetNetworkPlayer(string guid) {
 
             if (this.connectedPlayers.ContainsKey(guid)) {
                 return this.connectedPlayers[guid];
 
             } else {
-                return new UnityNetworkPlayer() { guid = "0", name = "000", ready = false };
+                return new NetPlayer() { guid = "0", name = "000", ready = false };
             }
         }
 
         // get ping of player
-        public int GetNetworkPlayerPing(UnityNetworkPlayer player) {
+        public int GetNetworkPlayerPing(NetPlayer player) {
 
             for (int i = 0; i < Network.connections.Length; i++) {
 
@@ -214,11 +222,14 @@ namespace Goga.UnityNetwork {
         // get new hostlist data from master server
         public void UpdateHostList() {
 
-            // get list from masterserver
-            MasterServer.RequestHostList(this.gameName);
+            if (this.isOnline) { 
 
-            // sync local list with master list
-            this.lobbyList = MasterServer.PollHostList();
+                // get list from masterserver
+                MasterServer.RequestHostList(this.gameName);
+
+                // sync local list with master list
+                this.lobbyList = MasterServer.PollHostList();
+            }
         }
 
         // event for state changes
@@ -240,7 +251,7 @@ namespace Goga.UnityNetwork {
         // check if all palyers are ready
         bool AllPlayersReadyCheck() {
 
-            foreach (UnityNetworkPlayer player in this.connectedPlayers.Values) {
+            foreach (NetPlayer player in this.connectedPlayers.Values) {
 
                 if (!player.ready) {
                     return false;
@@ -288,7 +299,7 @@ namespace Goga.UnityNetwork {
             }
 
 
-            UnityNetworkPlayer _serverHost = new UnityNetworkPlayer();
+            NetPlayer _serverHost = new NetPlayer();
             _serverHost.guid = Network.player.guid;
             _serverHost.name = this.playerName;
 
@@ -334,7 +345,7 @@ namespace Goga.UnityNetwork {
 
             if (message != "") {
 
-                LobbyChatMessage msg = new LobbyChatMessage(message);
+                LobbyMessage msg = new LobbyMessage(message);
                 msg.author = this.playerName;
 
                 string _msg = jWriter.Write(msg);
@@ -350,7 +361,7 @@ namespace Goga.UnityNetwork {
         [RPC]
         void AddConnectedPlayer(string playerObj) {
 
-            UnityNetworkPlayer _player = jReader.Read<UnityNetworkPlayer>(playerObj);
+            NetPlayer _player = jReader.Read<NetPlayer>(playerObj);
 
             if (!this.connectedPlayers.ContainsKey(_player.guid)) {
 
@@ -377,7 +388,7 @@ namespace Goga.UnityNetwork {
         [RPC]
         void UpdateNetworkPlayer(string playerObj) {
 
-            UnityNetworkPlayer _player = jReader.Read<UnityNetworkPlayer>(playerObj);
+            NetPlayer _player = jReader.Read<NetPlayer>(playerObj);
 
             // check if player exists, if not create it
             if (this.connectedPlayers.ContainsKey(_player.guid)) {
@@ -391,7 +402,7 @@ namespace Goga.UnityNetwork {
         [RPC]
         void GetLobbyChatMessage(string message) {
 
-            LobbyChatMessage _msg = jReader.Read<LobbyChatMessage>(message);
+            LobbyMessage _msg = jReader.Read<LobbyMessage>(message);
             lobbyChat.Add(_msg);
         }
 
@@ -409,6 +420,33 @@ namespace Goga.UnityNetwork {
 
         #endregion RPC functions
 
+        IEnumerator CheckInternetConnection() {
+
+            while (true) {
+
+                Ping pingIP = new Ping(this.onlineCheckIp);
+
+                yield return new WaitForSeconds(1);
+
+                if (pingIP.isDone) {
+                    this.onlineCheckPing = pingIP.time;
+                    this.isOnline = true;
+                } else {
+                    Debug.Log("no inet connection..");
+                    this.onlineCheckPing = 0;
+                    this.isOnline = false;
+
+                    if (Network.isServer && !this.isLanOnly) {
+                        this.DisconnectPeer();
+                    }
+                }
+
+                yield return new WaitForSeconds(this.onlineCheckRate);
+            }
+
+
+        }
+
         void CleanUp() {
 
             this.RemoveAllNetworkObjects();
@@ -422,9 +460,9 @@ namespace Goga.UnityNetwork {
 
         void RemoveAllNetworkObjects() {
 
-            UnityNetworkObject[] playerObjs = FindObjectsOfType(typeof(UnityNetworkObject)) as UnityNetworkObject[];
+            NetObject[] playerObjs = FindObjectsOfType(typeof(NetObject)) as NetObject[];
 
-            foreach (UnityNetworkObject obj in playerObjs) {
+            foreach (NetObject obj in playerObjs) {
                 Destroy(obj.gameObject);
             }
         }
@@ -436,7 +474,7 @@ namespace Goga.UnityNetwork {
 
         void OnConnectedToServer() {
 
-            UnityNetworkPlayer _host = new UnityNetworkPlayer();
+            NetPlayer _host = new NetPlayer();
             _host.guid = Network.player.guid;
             _host.name = this.playerName;
 
@@ -463,14 +501,14 @@ namespace Goga.UnityNetwork {
         void OnPlayerConnected(NetworkPlayer player) {
 
             // tell the player who is in
-            foreach (UnityNetworkPlayer existingPlayer in connectedPlayers.Values) {
+            foreach (NetPlayer existingPlayer in connectedPlayers.Values) {
 
                 string _existingPlayerJson = jWriter.Write(existingPlayer);
                 networkView.RPC("AddConnectedPlayer", player, _existingPlayerJson);
             }
 
             // send player all chat messages
-            foreach (LobbyChatMessage msg in lobbyChat) {
+            foreach (LobbyMessage msg in lobbyChat) {
 
                 string _msg = jWriter.Write(msg);
                 networkView.RPC("GetLobbyChatMessage", player, _msg);
@@ -481,9 +519,9 @@ namespace Goga.UnityNetwork {
 
             networkView.RPC("RemoveConnectedPlayer", RPCMode.All, player.guid);
 
-            UnityNetworkObject[] playerObjs = FindObjectsOfType<UnityNetworkObject>() as UnityNetworkObject[];
+            NetObject[] playerObjs = FindObjectsOfType<NetObject>() as NetObject[];
             
-            foreach (UnityNetworkObject obj in playerObjs) {
+            foreach (NetObject obj in playerObjs) {
 
                 if (obj.playerGuid == player.guid) {
 

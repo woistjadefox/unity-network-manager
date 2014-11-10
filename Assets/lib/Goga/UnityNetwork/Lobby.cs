@@ -5,11 +5,11 @@ using System.Collections.Generic;
 
 namespace Goga.UnityNetwork {
 
-    public class UnityNetworkLobby : MonoBehaviour {
+    public class Lobby : MonoBehaviour {
 
         // network handler
-        public UnityNetworkManager uNet;
-        public UnityNetworkDiscovery uDiscovery;
+        public Manager uNet;
+        public AutoDiscovery uDiscovery;
         public int minPlayers = 2;
         public int maxPlayers = 32;
         public int defaultPlayerSize = 2;
@@ -85,36 +85,39 @@ namespace Goga.UnityNetwork {
             // lobby window
             lobbyWin = GUILayout.Window(50, lobbyWin, (int windowID) => {
 
-                // internet hosts
-                if (uNet.GetLobbyList().Length > 0) {
-                    GUILayout.Label("Available Internet Games");
-                } else {
-                    GUILayout.Label("No open Internet Games available");
-                }
+                if (uNet.isOnline) {
 
-                if (lobbyWin.height > 200) {
-                    lobbyScrollPosition = GUILayout.BeginScrollView(lobbyScrollPosition, GUILayout.MinHeight(200));
-                }
-
-                foreach (HostData host in uNet.GetLobbyList()) {
-
-                    GUILayout.BeginHorizontal();
-
-                    GUILayout.Box("<b>" + host.gameName + "</b>");
-
-                    if (host.comment != "") {
-                        GUILayout.Box("<b>" + host.comment + "</b>");
+                    // internet hosts
+                    if (uNet.GetLobbyList().Length > 0) {
+                        GUILayout.Label("Available Internet Games");
+                    } else {
+                        GUILayout.Label("No open Internet Games available");
                     }
 
-                    GUILayout.Box("<b>" + host.connectedPlayers + " / " + host.playerLimit + "</b>", GUILayout.MaxWidth(50));
+                    if (lobbyWin.height > 200) {
+                        lobbyScrollPosition = GUILayout.BeginScrollView(lobbyScrollPosition, GUILayout.MinHeight(200));
+                    }
 
-                    if (uNet.GetPeerType() == NetworkPeerType.Disconnected && !uNet.isConnecting && host.connectedPlayers < host.playerLimit) {
-                        if (GUILayout.Button("join", GUILayout.MaxWidth(80))) {
-                            this.Join(host);
+                    foreach (HostData host in uNet.GetLobbyList()) {
+
+                        GUILayout.BeginHorizontal();
+
+                        GUILayout.Box("<b>" + host.gameName + "</b>");
+
+                        if (host.comment != "") {
+                            GUILayout.Box("<b>" + host.comment + "</b>");
                         }
-                    }
 
-                    GUILayout.EndHorizontal();
+                        GUILayout.Box("<b>" + host.connectedPlayers + " / " + host.playerLimit + "</b>", GUILayout.MaxWidth(50));
+
+                        if (uNet.GetPeerType() == NetworkPeerType.Disconnected && !uNet.isConnecting && host.connectedPlayers < host.playerLimit) {
+                            if (GUILayout.Button("join", GUILayout.MaxWidth(80))) {
+                                this.Join(host);
+                            }
+                        }
+
+                        GUILayout.EndHorizontal();
+                    }
                 }
 
                 // lan discovery hosts
@@ -166,7 +169,14 @@ namespace Goga.UnityNetwork {
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Label("LAN only", GUILayout.MaxWidth(80));
-                    lanGame = GUILayout.Toggle(lanGame, "");
+
+                    if (uNet.isOnline) {
+                        lanGame = GUILayout.Toggle(lanGame, "");
+                    } else {
+                        lanGame = true;
+                        GUILayout.Toggle(lanGame, "");
+                    }
+
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
@@ -234,7 +244,7 @@ namespace Goga.UnityNetwork {
                     // list players
                     if (uNet.connectedPlayers.Count > 0) {
 
-                        foreach (UnityNetworkPlayer player in uNet.connectedPlayers.Values) {
+                        foreach (NetPlayer player in uNet.connectedPlayers.Values) {
 
                             GUILayout.BeginHorizontal();
 
@@ -284,7 +294,7 @@ namespace Goga.UnityNetwork {
                         _chatCounter = uNet.lobbyChat.Count;
                     }
 
-                    foreach (LobbyChatMessage msg in uNet.lobbyChat) {
+                    foreach (LobbyMessage msg in uNet.lobbyChat) {
                         string _color = "teal";
 
                         if (msg.author == uNet.playerName) {
@@ -353,6 +363,12 @@ namespace Goga.UnityNetwork {
                 }
 
                 GUILayout.EndHorizontal();
+
+                if (uNet.isOnline) {
+                    GUILayout.Label("online");
+                } else {
+                    GUILayout.Label("offline");
+                }
 
             }, "Nickname");
 

@@ -4,7 +4,7 @@ using Goga.UnityNetwork;
 
 public class UIMenu : MonoBehaviour {
 
-    public UnityNetworkLobby lobby;
+    public Lobby lobby;
 
     private bool menuActive = true;
 

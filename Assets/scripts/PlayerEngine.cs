@@ -10,11 +10,11 @@ public enum PlayerColors {
     Red, Blue, Yellow, Green
 }
 
-[RequireComponent(typeof(UnityNetworkObject))]
+[RequireComponent(typeof(NetObject))]
 
 public class PlayerEngine : MonoBehaviour {
 
-    private UnityNetworkObject uNetObj;
+    private NetObject uNetObj;
     public bool allowLocalMovement = true;
     public float walkSpeed = 3f;
     public bool showMoveCount = false;
@@ -25,7 +25,7 @@ public class PlayerEngine : MonoBehaviour {
   
 	// Use this for initialization
 	void Start () {
-        this.uNetObj = this.GetComponent<UnityNetworkObject>();
+        this.uNetObj = this.GetComponent<NetObject>();
         renderer.material.color = Color.gray;
 	}
 

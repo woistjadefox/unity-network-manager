@@ -4,7 +4,7 @@ using System.Collections;
 
 namespace Goga.UnityNetwork {
 
-    public class UnityNetworkPredictor : MonoBehaviour {
+    public class Predictor : MonoBehaviour {
 
         public bool clientSideInterpolation = false;
         public double m_InterpolationBackTime = 0.1;
@@ -13,9 +13,9 @@ namespace Goga.UnityNetwork {
         public float positionCorrectionThreshold = 0.2f;
         public float positionCorrectionSpeed = 1.5f;
 
-        private UnityNetworkObject uNetObj;
+        private NetObject uNetObj;
 
-        internal struct State {
+        internal struct PositionState {
 
             internal double timestamp;
             internal Vector3 pos;
@@ -24,7 +24,7 @@ namespace Goga.UnityNetwork {
             internal Vector3 angularVelocity;
         }
 
-        private State[] m_BufferedState = new State[30]; // We store twenty states with "playback" information
+        private PositionState[] m_BufferedState = new PositionState[30]; // We store twenty states with "playback" information
         private int m_TimestampCount;     // Keep track of what slots are used
 
         Vector3 pos = Vector3.zero;
@@ -33,7 +33,7 @@ namespace Goga.UnityNetwork {
         Vector3 angularVelocity = Vector3.zero;
 
         void Start() {
-            this.uNetObj = this.GetComponent<UnityNetworkObject>();
+            this.uNetObj = this.GetComponent<NetObject>();
         }
 
         void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
@@ -78,7 +78,7 @@ namespace Goga.UnityNetwork {
                 }
 
                 // Record current state in slot 0
-                State state;
+                PositionState state;
                 state.timestamp = info.timestamp;
                 state.pos = pos;
                 state.velocity = velocity;
@@ -149,9 +149,9 @@ namespace Goga.UnityNetwork {
                     if (m_BufferedState[i].timestamp <= interpolationTime || i == m_TimestampCount - 1) {
 
                         // The state one slot newer (<100ms) than the best playback state
-                        State rhs = m_BufferedState[Mathf.Max(i - 1, 0)];
+                        PositionState rhs = m_BufferedState[Mathf.Max(i - 1, 0)];
                         // The best playback state (closest to 100 ms old (default time))
-                        State lhs = m_BufferedState[i];
+                        PositionState lhs = m_BufferedState[i];
 
                         // Use the time between the two slots to determine if interpolation is necessary
                         double length = rhs.timestamp - lhs.timestamp;
@@ -176,7 +176,7 @@ namespace Goga.UnityNetwork {
             // Use extrapolation
             else {
 
-                State latest = m_BufferedState[0];
+                PositionState latest = m_BufferedState[0];
 
                 // check if there is a rigidbody
                 if (rigidbody == null) {

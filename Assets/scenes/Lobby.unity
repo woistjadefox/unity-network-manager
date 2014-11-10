@@ -82,7 +82,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 130846855}
-  - 148: {fileID: 130846854}
   - 114: {fileID: 130846852}
   m_Layer: 0
   m_Name: _UI
@@ -103,18 +102,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lobby: {fileID: 447105972}
---- !u!148 &130846854
-NetworkView:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 130846851}
-  m_Enabled: 1
-  m_StateSynchronization: 1
-  m_Observed: {fileID: 130846855}
-  m_ViewID:
-    m_ID: 2
-    m_Type: 1
 --- !u!4 &130846855
 Transform:
   m_ObjectHideFlags: 0
@@ -222,6 +209,10 @@ MonoBehaviour:
   gameName: rainyCatFight
   playerName: 
   isConnecting: 0
+  onlineCheckIp: 8.8.8.8
+  onlineCheckRate: 10
+  onlineCheckPing: 0
+  isOnline: 0
   isLanOnly: 0
 --- !u!114 &447105969
 MonoBehaviour:

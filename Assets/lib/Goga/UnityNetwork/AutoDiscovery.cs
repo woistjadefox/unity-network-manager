@@ -27,9 +27,9 @@ namespace Goga.UnityNetwork {
         }
     }
 
-    public class UnityNetworkDiscovery : MonoBehaviour {
+    public class AutoDiscovery : MonoBehaviour {
 
-        public UnityNetworkManager uNet;
+        public Manager uNet;
         public int remotePort = 19784;
         public float sendRate = 3f;
         public int timeoutThreshold = 5;

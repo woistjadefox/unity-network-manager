@@ -4,35 +4,35 @@ using System.Diagnostics;
 
 namespace Goga.UnityNetwork {
 
-    public enum SendType {
+    public enum RPCType {
         Bool, Int, Float, String
     }
 
-    public class SendObj {
+    public class RPCObject {
 
-        public SendType type;
+        public RPCType type;
         public bool boolData;
         public int intData;
         public float floatData;
         public string stringData;
 
-        public SendObj(SendType type) {
+        public RPCObject(RPCType type) {
             this.type = type;
         }
     }
 
     [RequireComponent(typeof(NetworkView))]
 
-    public class UnityNetworkObject : MonoBehaviour {
+    public class NetObject : MonoBehaviour {
 
-        private UnityNetworkManager uNet;
+        private Manager uNet;
         public string playerGuid;
 
         private StackFrame _frame;
         private string _callerMethod;
 
         void Start() {
-            this.uNet = FindObjectOfType<UnityNetworkManager>();
+            this.uNet = FindObjectOfType<Manager>();
         }
 
         // set the owner of the object
@@ -40,10 +40,9 @@ namespace Goga.UnityNetwork {
         public void SetOwner(string guid) {
 
             this.playerGuid = guid;
-
         }
 
-        public UnityNetworkManager GetManager() {
+        public Manager GetManager() {
             return this.uNet;
         }
 
@@ -57,7 +56,7 @@ namespace Goga.UnityNetwork {
         }
 
 
-        public bool RoleObserverBase(SendObj state, int senderID, bool broadcastToAll, bool allowLocalAction) {
+        public bool RoleObserverBase(RPCObject state, int senderID, bool broadcastToAll, bool allowLocalAction) {
 
             // get caller method name
             _frame = new StackFrame(2);
@@ -67,19 +66,19 @@ namespace Goga.UnityNetwork {
             if (Network.isClient && this.IsMine() && senderID != 1) {
 
                 switch (state.type) {
-                    case SendType.Bool: 
+                    case RPCType.Bool: 
                         networkView.RPC(_callerMethod, RPCMode.Server, state.boolData, 0);
                         break;
 
-                    case SendType.Int:
+                    case RPCType.Int:
                         networkView.RPC(_callerMethod, RPCMode.Server, state.intData, 0);
                         break;
 
-                    case SendType.Float:
+                    case RPCType.Float:
                         networkView.RPC(_callerMethod, RPCMode.Server, state.floatData, 0);
                         break;
 
-                    case SendType.String:
+                    case RPCType.String:
                         networkView.RPC(_callerMethod, RPCMode.Server, state.stringData, 0);
                         break;
                 }
@@ -97,19 +96,19 @@ namespace Goga.UnityNetwork {
                     UnityEngine.Debug.Log("server broadcasting: " + _callerMethod);
 
                     switch (state.type) {
-                        case SendType.Bool:
+                        case RPCType.Bool:
                             networkView.RPC(_callerMethod, RPCMode.OthersBuffered, state.boolData, 1);
                             break;
 
-                        case SendType.Int:
+                        case RPCType.Int:
                             networkView.RPC(_callerMethod, RPCMode.OthersBuffered, state.intData, 1);
                             break;
 
-                        case SendType.Float:
+                        case RPCType.Float:
                             networkView.RPC(_callerMethod, RPCMode.OthersBuffered, state.floatData, 1);
                             break;
 
-                        case SendType.String:
+                        case RPCType.String:
                             networkView.RPC(_callerMethod, RPCMode.OthersBuffered, state.stringData, 1);
                             break;
                     }
@@ -132,7 +131,7 @@ namespace Goga.UnityNetwork {
 
         public bool RoleObserver(bool state, int senderID, bool broadcastToAll, bool allowLocalAction) {
 
-            SendObj obj = new SendObj(SendType.Bool);
+            RPCObject obj = new RPCObject(RPCType.Bool);
             obj.boolData = state;
 
             return this.RoleObserverBase(obj, senderID, broadcastToAll, allowLocalAction);
@@ -140,7 +139,7 @@ namespace Goga.UnityNetwork {
 
         public bool RoleObserver(int state, int senderID, bool broadcastToAll, bool allowLocalAction) {
             
-            SendObj obj = new SendObj(SendType.Int);
+            RPCObject obj = new RPCObject(RPCType.Int);
             obj.intData = state;
 
             return this.RoleObserverBase(obj, senderID, broadcastToAll, allowLocalAction);
@@ -148,7 +147,7 @@ namespace Goga.UnityNetwork {
 
         public bool RoleObserver(float state, int senderID, bool broadcastToAll, bool allowLocalAction) {
             
-            SendObj obj = new SendObj(SendType.Float);
+            RPCObject obj = new RPCObject(RPCType.Float);
             obj.floatData = state;
 
             return this.RoleObserverBase(obj, senderID, broadcastToAll, allowLocalAction);
@@ -156,7 +155,7 @@ namespace Goga.UnityNetwork {
 
         public bool RoleObserver(string state, int senderID, bool broadcastToAll, bool allowLocalAction) {
 
-            SendObj obj = new SendObj(SendType.String);
+            RPCObject obj = new RPCObject(RPCType.String);
             obj.stringData = state;
 
             return this.RoleObserverBase(obj, senderID, broadcastToAll, allowLocalAction);
