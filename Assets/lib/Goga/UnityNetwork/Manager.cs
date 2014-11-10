@@ -251,6 +251,16 @@ namespace Goga.UnityNetwork {
         // check if all palyers are ready
         bool AllPlayersReadyCheck() {
 
+            if (this.isLanOnly) {
+                if (this.GetActualHostLAN().playerLimit != this.connectedPlayers.Count) {
+                    return false;
+                }
+            } else {
+                if (this.GetActualHost().playerLimit != this.connectedPlayers.Count) {
+                    return false;
+                }
+            }
+
             foreach (NetPlayer player in this.connectedPlayers.Values) {
 
                 if (!player.ready) {
@@ -531,7 +541,7 @@ namespace Goga.UnityNetwork {
 
             }
 
-            //Network.DestroyPlayerObjects(player);
+            Network.DestroyPlayerObjects(player);
         }
 
         void OnDisable() {

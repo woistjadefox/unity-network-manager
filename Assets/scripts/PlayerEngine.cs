@@ -122,6 +122,7 @@ public class PlayerEngine : MonoBehaviour {
 
         if (uNetObj.RoleObserver(state, senderID, true, false)) {
 
+            Debug.Log("whoop i cange colors!");
             this.showMoveCount = state;
         }
     }

@@ -31,8 +31,14 @@ namespace Goga.UnityNetwork {
         private StackFrame _frame;
         private string _callerMethod;
 
+        void Awake() {
+
+            Network.isMessageQueueRunning = false;
+        }
+
         void Start() {
             this.uNet = FindObjectOfType<Manager>();
+            Network.isMessageQueueRunning = true;
         }
 
         // set the owner of the object
