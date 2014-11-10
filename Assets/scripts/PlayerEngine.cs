@@ -6,6 +6,10 @@ public enum PlayerMovementState {
     Idle, Up, Down, Left, Right
 }
 
+public enum PlayerColors {
+    Red, Blue, Yellow, Green
+}
+
 [RequireComponent(typeof(UnityNetworkObject))]
 
 public class PlayerEngine : MonoBehaviour {
@@ -14,7 +18,6 @@ public class PlayerEngine : MonoBehaviour {
     public bool allowLocalMovement = true;
     public float walkSpeed = 3f;
     public bool showMoveCount = false;
-    public Color[] colors;
 
     private PlayerMovementState movementState;
 
@@ -22,12 +25,11 @@ public class PlayerEngine : MonoBehaviour {
   
 	// Use this for initialization
 	void Start () {
-
         this.uNetObj = this.GetComponent<UnityNetworkObject>();
-        renderer.material.color = colors[Random.Range(0, colors.Length)];
+        renderer.material.color = Color.gray;
 	}
 
-    void FixedUpdate() {
+    void Update() {
 
 
         if (this.uNetObj.IsMine()) {
@@ -38,22 +40,37 @@ public class PlayerEngine : MonoBehaviour {
     void CheckInput() {
 
         if (Input.GetKey(KeyCode.UpArrow)) {
-            this.SendInput(PlayerMovementState.Up);
+            this.SendInput((int)PlayerMovementState.Up);
         }
 
 
         if (Input.GetKey(KeyCode.DownArrow)) {
-            this.SendInput(PlayerMovementState.Down);
+            this.SendInput((int)PlayerMovementState.Down);
         }
 
 
         if (Input.GetKey(KeyCode.LeftArrow)) {
-            this.SendInput(PlayerMovementState.Left);
+            this.SendInput((int)PlayerMovementState.Left);
         }
 
 
         if (Input.GetKey(KeyCode.RightArrow)) {
-            this.SendInput(PlayerMovementState.Right);
+            this.SendInput((int)PlayerMovementState.Right);
+        }
+
+        if (Input.GetKeyDown("c")) {
+
+            Debug.Log("pressed c");
+            this.ChangeColor((int)PlayerColors.Red);
+        }
+
+        if (Input.GetKeyDown("m")) {
+
+            if (!this.showMoveCount) {
+                this.ShowMoveCount(true);
+            } else {
+                this.ShowMoveCount(false);
+            }
         }
 
 
@@ -88,6 +105,28 @@ public class PlayerEngine : MonoBehaviour {
         this.movementState = PlayerMovementState.Idle;
     }
 
+    [RPC]
+    void SendInput(int state, int senderID = 0) {
+
+        if (uNetObj.RoleObserver(state, senderID, false, this.allowLocalMovement)) {
+
+            this.movementState = (PlayerMovementState)state;
+
+            this._moveCount++;
+            this.MovementStateMachine();
+        }
+    }
+
+    [RPC]
+    void ShowMoveCount(bool state, int senderID = 0) {
+
+        if (uNetObj.RoleObserver(state, senderID, true, false)) {
+
+            this.showMoveCount = state;
+        }
+    }
+
+    /*
     // client send movement input
     void SendInput(PlayerMovementState state) {
 
@@ -116,6 +155,27 @@ public class PlayerEngine : MonoBehaviour {
         this._moveCount++;
         this.MovementStateMachine();
 
+    }
+    */
+
+    // change color
+    [RPC]
+    void ChangeColor(int color, int senderID = 0) {
+
+        if (uNetObj.RoleObserver(color, senderID, true, false)) {
+
+            Color newColor = Color.gray;
+
+            switch (color) {
+                case 0: newColor = Color.red; break;
+                case 1: newColor = Color.blue; break;
+                case 2: newColor = Color.yellow; break;
+                case 3: newColor = Color.green; break;
+            }
+
+            renderer.material.color = newColor;
+
+        }        
     }
 
     void OnGUI() {

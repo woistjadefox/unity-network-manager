@@ -87,11 +87,6 @@ MonoBehaviour:
   allowLocalMovement: 1
   walkSpeed: 5.5
   showMoveCount: 0
-  colors:
-  - {r: .911764681, g: .0670415312, b: .0670415312, a: 0}
-  - {r: .217861831, g: .45588237, b: .124026828, a: 0}
-  - {r: .275735289, g: .337880254, b: .75, a: 0}
-  - {r: .850724936, g: .889705896, b: .183174759, a: 0}
 --- !u!114 &11400002
 MonoBehaviour:
   m_ObjectHideFlags: 1

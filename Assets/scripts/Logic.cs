@@ -12,9 +12,11 @@ public class Logic : MonoBehaviour {
     private bool gameRunning;
 
 	// Use this for initialization
-	void Awake () {
+	void Start () {
 
         this.gameRunning = false;
+        uNet.newState += new ChangedCliendState(OnStateChange);
+
 	}
 
     public bool IsGameRunning() {
@@ -45,6 +47,17 @@ public class Logic : MonoBehaviour {
     }
 
     public void InstantiateNewPlayer() {
+
+    }
+
+    void OnStateChange(NetworkPeerType peerType) {
+
+        switch (peerType) {
+            case NetworkPeerType.Disconnected:
+
+                this.gameRunning = false;
+                break;
+        }
 
     }
 }
