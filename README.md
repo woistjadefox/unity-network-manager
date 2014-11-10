@@ -12,7 +12,7 @@ Features:
 
 ####Installation:
 ***
-Attach UnityNetworkLobby.cs, UnityNetworkManager.cs & UnityNetworkDiscovery.cs to an empty GameObject and set the public parameter "Game Name". 
+Attach Lobby.cs, Manager.cs & AutoDiscovery.cs to an empty GameObject and set the public parameter "Game Name". 
 Example in scene Lobby.unity
 
 ####Still in development / Todo:
