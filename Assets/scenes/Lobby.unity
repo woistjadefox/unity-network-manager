@@ -207,12 +207,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   serverPort: 25002
   gameName: rainyCatFight
+  enableHostMigration: 0
   playerName: 
-  isConnecting: 0
   onlineCheckIp: 8.8.8.8
   onlineCheckRate: 10
   onlineCheckPing: 0
   isOnline: 0
+  isConnecting: 0
   isLanOnly: 0
 --- !u!114 &447105969
 MonoBehaviour:

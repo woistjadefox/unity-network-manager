@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Goga.UnityNetwork {
@@ -30,6 +31,8 @@ namespace Goga.UnityNetwork {
 
         private StackFrame _frame;
         private string _callerMethod;
+
+        public Dictionary<string, System.Action> lastRpcCalls = new Dictionary<string, System.Action>();
 
         void Awake() {
 
@@ -72,20 +75,40 @@ namespace Goga.UnityNetwork {
             if (Network.isClient && this.IsMine() && senderID != 1) {
 
                 switch (state.type) {
-                    case RPCType.Bool: 
-                        networkView.RPC(_callerMethod, RPCMode.Server, state.boolData, 0);
+                    case RPCType.Bool:
+
+                        this.lastRpcCalls[_callerMethod] = new System.Action(() => {
+                            networkView.RPC(_callerMethod, RPCMode.Server, state.boolData, 0);
+                        });
+
+                        this.lastRpcCalls[_callerMethod](); // run rpc
                         break;
 
                     case RPCType.Int:
-                        networkView.RPC(_callerMethod, RPCMode.Server, state.intData, 0);
+
+                        this.lastRpcCalls[_callerMethod] = new System.Action(() => {
+                            networkView.RPC(_callerMethod, RPCMode.Server, state.intData, 0);
+                        });
+
+                        this.lastRpcCalls[_callerMethod](); // run rpc
                         break;
 
                     case RPCType.Float:
-                        networkView.RPC(_callerMethod, RPCMode.Server, state.floatData, 0);
+
+                        this.lastRpcCalls[_callerMethod] = new System.Action(() => {
+                            networkView.RPC(_callerMethod, RPCMode.Server, state.floatData, 0);
+                        });
+
+                        this.lastRpcCalls[_callerMethod](); // run rpc
                         break;
 
                     case RPCType.String:
-                        networkView.RPC(_callerMethod, RPCMode.Server, state.stringData, 0);
+
+                        this.lastRpcCalls[_callerMethod] = new System.Action(() => {
+                            networkView.RPC(_callerMethod, RPCMode.Server, state.stringData, 0);
+                        });
+
+                        this.lastRpcCalls[_callerMethod](); // run rpc
                         break;
                 }
 
