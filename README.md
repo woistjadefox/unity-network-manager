@@ -24,6 +24,7 @@ Example in scene Lobby.unity
 
 - Scrollbar for all connected players in the actual game window
 - Connection retry if NAT punchthrough doesn't work the first time
+- Host Migration (if the server disconnects, another client should be able to take over authority)
 
 ####Support:
 ***
