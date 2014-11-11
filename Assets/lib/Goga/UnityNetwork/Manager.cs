@@ -34,13 +34,14 @@ namespace Goga.UnityNetwork {
 
         public int serverPort = 25002;
         public string gameName;
-        public bool enableHostMigration = false;
         public string playerName;
         public string onlineCheckIp = "8.8.8.8"; // google dns server
         public float onlineCheckRate = 10f;
         public int onlineCheckPing;
         public bool isOnline;
         public bool isConnecting;
+        public bool isReconnecting;
+        private bool _isDisconnecting;
 
         public Dictionary<string, NetPlayer> connectedPlayers = new Dictionary<string, NetPlayer>();
         public List<LobbyMessage> lobbyChat = new List<LobbyMessage>();
@@ -58,8 +59,9 @@ namespace Goga.UnityNetwork {
         private JsonReader jReader = new JsonReader();
         private JsonWriter jWriter = new JsonWriter();
 
-        private bool _isReconnecting;
-        private bool _isDisconnecting;
+        /* addons */
+        private HostMigration migration;
+
 
         void Awake() {
 
@@ -80,6 +82,14 @@ namespace Goga.UnityNetwork {
             this.isOnline = false;
 
             StartCoroutine(CheckInternetConnection());
+
+            /* load addons ******************************/
+
+            // migration plugin
+            this.migration = GetComponent<HostMigration>();
+            if (this.migration && !this.migration.enabled) {
+                this.migration = null;
+            }
         }
 
         #region getter & setter
@@ -181,6 +191,18 @@ namespace Goga.UnityNetwork {
             }
 
             return 0;
+        }
+
+        public NetworkPlayer GetUnityNetworkPlayer(string guid) {
+
+            for (int i = 0; i < Network.connections.Length; i++) {
+
+                if (guid == Network.connections[i].guid) {
+                    return Network.connections[i];
+                }
+            }
+
+            return new NetworkPlayer();
         }
 
         // toggle player ready state
@@ -345,6 +367,17 @@ namespace Goga.UnityNetwork {
             this.SetActualHostLAN(host);
         }
 
+        public void ConnectPeer(string guid) {
+
+            if (this.isLanOnly) {
+                Network.Connect(this.GetUnityNetworkPlayer(guid).ipAddress, this.serverPort);
+
+            } else {
+                Network.Connect(guid);
+            }
+
+        }
+
         #region RPC call functions
         public void SpreadNetworkPlayer() {
 
@@ -469,7 +502,7 @@ namespace Goga.UnityNetwork {
             this.connectedPlayers.Clear();
 
 
-            if (!this._isReconnecting) {
+            if (!this.isReconnecting) {
                 this.lobbyChat.Clear();
                 this.SetActualHost(null);
                 this.SetActualHostLAN(null);
@@ -486,7 +519,7 @@ namespace Goga.UnityNetwork {
             foreach (NetObject obj in playerObjs) {
                 
                 // remove only disconnected objs if reconnecting
-                if (this._isReconnecting) {
+                if (this.isReconnecting) {
 
                     if (!this.connectedPlayers.ContainsKey(obj.playerGuid)) {
                         Debug.Log("destroy ex server obj:" + obj.gameObject.name);
@@ -524,7 +557,7 @@ namespace Goga.UnityNetwork {
 
             this.SetIsConnecting(false);
 
-            if (!this.enableHostMigration || Network.isServer || this._isDisconnecting) {
+            if (!this.migration || Network.isServer || this._isDisconnecting) {
 
                 Debug.Log("i'm disconnecting, just let me go..");
                 this.SetActualHost(null);
@@ -533,68 +566,16 @@ namespace Goga.UnityNetwork {
             } else {
 
                 this.SetIsConnecting(true);
-                this.HostMigration();
-            }
 
-        }
-
-        void HostMigration() {
-
-            this._isReconnecting = true;
-
-            // remove actual server from the top
-            IEnumerator enumeratorLast = this.connectedPlayers.Values.GetEnumerator();
-            enumeratorLast.MoveNext();
-            NetPlayer actualServer = (NetPlayer)enumeratorLast.Current;
-            this.connectedPlayers.Remove(actualServer.guid);
-
-            // get new server from the top
-            IEnumerator enumerator = this.connectedPlayers.Values.GetEnumerator();
-            enumerator.MoveNext();
-
-            if (enumerator.Current != null) {
-
-                NetPlayer newServerPlayer = (NetPlayer)enumerator.Current;
-
-                string newServerGUID = newServerPlayer.guid;
-
-                // check if i'm the next server host
-                if (newServerGUID == Network.player.guid) {
-
-                    Debug.Log("I have to be the new Server!");
-                    StartCoroutine(this.StartNewServer());
-
-                } else {
-
-                    Debug.Log("I have to reconnect to guid:" + newServerGUID);
-                    StartCoroutine(this.ReconnectToNewServer(newServerGUID));
+                if (this.migration) {
+                    this.migration.Migrate();
                 }
-            }
-        }
 
-        IEnumerator StartNewServer() {
-
-            yield return new WaitForSeconds(3);
-
-            if (this.isLanOnly) {
-                this.RegisterGame(this.isLanOnly, this.GetActualHostLAN().gameName, this.GetActualHostLAN().comment, this.GetActualHostLAN().playerLimit);
-            } else {
-                this.RegisterGame(false, this.GetActualHost().gameName, this.GetActualHost().comment, this.GetActualHost().playerLimit);
             }
 
-            this._isReconnecting = false;
-
         }
 
-        IEnumerator ReconnectToNewServer(string guid) {
-
-            Debug.Log("connecting to new server...");
-            yield return new WaitForSeconds(5);
-
-            Network.Connect(guid);
-
-            this._isReconnecting = false;
-        }
+        
 
         void OnFailedToConnect() {
             this.SetIsConnecting(false);
