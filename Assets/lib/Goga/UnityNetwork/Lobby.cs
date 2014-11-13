@@ -34,6 +34,17 @@ namespace Goga.UnityNetwork {
         private string _chatForm = "";
         private int _chatCounter = 0;
 
+        private bool showLobby = true;
+
+        public void ToggleLobby() {
+
+            if (showLobby) {
+                showLobby = false;
+            } else {
+                showLobby = true;
+            }
+        }
+
         void Start() {
 
             uNet.newState += new ChangedCliendState(OnStateChange);
@@ -53,6 +64,9 @@ namespace Goga.UnityNetwork {
         }
 
         void OnGUI() {
+
+            if (!this.showLobby)
+                return;
 
             GUI.depth = 99;
             GUI.skin.box.alignment = TextAnchor.MiddleLeft;

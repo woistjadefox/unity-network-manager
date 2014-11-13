@@ -7,6 +7,7 @@ using Goga.UnityNetwork;
 public class Logic : MonoBehaviour {
 
     public Manager uNet;
+    public Lobby lobby;
     public GameObject prefabPlayer;
 
     private bool gameRunning;
@@ -59,5 +60,13 @@ public class Logic : MonoBehaviour {
                 break;
         }
 
+    }
+
+    void Update() {
+
+        if (Input.GetKeyDown(KeyCode.Escape)) {
+
+            this.lobby.ToggleLobby();
+        }
     }
 }

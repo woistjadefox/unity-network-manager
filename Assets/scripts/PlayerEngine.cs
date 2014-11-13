@@ -108,7 +108,9 @@ public class PlayerEngine : MonoBehaviour {
     [RPC]
     void SendInput(int state, int senderID = 0) {
 
-        if (uNetObj.RoleObserver(state, senderID, false, this.allowLocalMovement)) {
+        object[] data = { state, senderID };
+
+        if (uNetObj.RoleObserver(data, false, this.allowLocalMovement)) {
 
             this.movementState = (PlayerMovementState)state;
 
@@ -120,9 +122,11 @@ public class PlayerEngine : MonoBehaviour {
     [RPC]
     void ShowMoveCount(bool state, int senderID = 0) {
 
-        if (uNetObj.RoleObserver(state, senderID, true, false)) {
+        object[] data = { state, senderID };
 
-            Debug.Log("whoop i cange colors!");
+        if (uNetObj.RoleObserver(data, true, false)) {
+
+            Debug.Log("whoop i show my move count");
             this.showMoveCount = state;
         }
     }
@@ -163,7 +167,9 @@ public class PlayerEngine : MonoBehaviour {
     [RPC]
     void ChangeColor(int color, int senderID = 0) {
 
-        if (uNetObj.RoleObserver(color, senderID, true, false)) {
+        object[] data = {color, senderID};
+
+        if (uNetObj.RoleObserver(data, true, false)) {
 
             Color newColor = Color.gray;
 

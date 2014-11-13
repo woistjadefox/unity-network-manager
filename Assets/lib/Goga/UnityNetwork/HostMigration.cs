@@ -72,6 +72,26 @@ namespace Goga.UnityNetwork {
 
             this.uNet.isReconnecting = false;
         }
+
+        void OnConnectedToServer() {
+
+            Debug.Log("HostMigration: Reconnect to the server done.. send rpc buffer from netObjects");
+
+            /*
+            NetObject[] playerObjs = FindObjectsOfType<NetObject>() as NetObject[];
+
+            foreach (NetObject obj in playerObjs) {
+
+                if (obj.playerGuid == Network.player.guid) {
+
+                    obj.SendLastRpcCalls();
+                }
+
+            }
+            */
+
+            
+        }
     }
 
 }

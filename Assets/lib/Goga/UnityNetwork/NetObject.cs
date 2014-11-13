@@ -5,23 +5,6 @@ using System.Diagnostics;
 
 namespace Goga.UnityNetwork {
 
-    public enum RPCType {
-        Bool, Int, Float, String
-    }
-
-    public class RPCObject {
-
-        public RPCType type;
-        public bool boolData;
-        public int intData;
-        public float floatData;
-        public string stringData;
-
-        public RPCObject(RPCType type) {
-            this.type = type;
-        }
-    }
-
     [RequireComponent(typeof(NetworkView))]
 
     public class NetObject : MonoBehaviour {
@@ -51,6 +34,14 @@ namespace Goga.UnityNetwork {
             this.playerGuid = guid;
         }
 
+        public void SendLastRpcCalls() {
+
+            foreach (System.Action call in lastRpcCalls.Values) {
+
+                call();
+            }
+        }
+
         public Manager GetManager() {
             return this.uNet;
         }
@@ -64,53 +55,25 @@ namespace Goga.UnityNetwork {
             return false;
         }
 
+        public bool RoleObserver(object[] data, bool broadcastToAll, bool allowLocalAction) {
 
-        public bool RoleObserverBase(RPCObject state, int senderID, bool broadcastToAll, bool allowLocalAction) {
+            int senderID = (int)data[data.Length-1];
 
             // get caller method name
-            _frame = new StackFrame(2);
+            _frame = new StackFrame(1);
             _callerMethod = _frame.GetMethod().Name;
 
 
             if (Network.isClient && this.IsMine() && senderID != 1) {
 
-                switch (state.type) {
-                    case RPCType.Bool:
+                // set senderID for client
+                data[data.Length-1] = 0;
 
-                        this.lastRpcCalls[_callerMethod] = new System.Action(() => {
-                            networkView.RPC(_callerMethod, RPCMode.Server, state.boolData, 0);
-                        });
+                this.lastRpcCalls[_callerMethod] = new System.Action(() => {
+                    networkView.RPC(_callerMethod, RPCMode.Server, data);
+                });
 
-                        this.lastRpcCalls[_callerMethod](); // run rpc
-                        break;
-
-                    case RPCType.Int:
-
-                        this.lastRpcCalls[_callerMethod] = new System.Action(() => {
-                            networkView.RPC(_callerMethod, RPCMode.Server, state.intData, 0);
-                        });
-
-                        this.lastRpcCalls[_callerMethod](); // run rpc
-                        break;
-
-                    case RPCType.Float:
-
-                        this.lastRpcCalls[_callerMethod] = new System.Action(() => {
-                            networkView.RPC(_callerMethod, RPCMode.Server, state.floatData, 0);
-                        });
-
-                        this.lastRpcCalls[_callerMethod](); // run rpc
-                        break;
-
-                    case RPCType.String:
-
-                        this.lastRpcCalls[_callerMethod] = new System.Action(() => {
-                            networkView.RPC(_callerMethod, RPCMode.Server, state.stringData, 0);
-                        });
-
-                        this.lastRpcCalls[_callerMethod](); // run rpc
-                        break;
-                }
+                this.lastRpcCalls[_callerMethod](); // run rpc
 
 
                 if (allowLocalAction) {
@@ -124,23 +87,11 @@ namespace Goga.UnityNetwork {
 
                     UnityEngine.Debug.Log("server broadcasting: " + _callerMethod);
 
-                    switch (state.type) {
-                        case RPCType.Bool:
-                            networkView.RPC(_callerMethod, RPCMode.OthersBuffered, state.boolData, 1);
-                            break;
+                    // set senderID for server
+                    data[data.Length-1] = 1;
 
-                        case RPCType.Int:
-                            networkView.RPC(_callerMethod, RPCMode.OthersBuffered, state.intData, 1);
-                            break;
-
-                        case RPCType.Float:
-                            networkView.RPC(_callerMethod, RPCMode.OthersBuffered, state.floatData, 1);
-                            break;
-
-                        case RPCType.String:
-                            networkView.RPC(_callerMethod, RPCMode.OthersBuffered, state.stringData, 1);
-                            break;
-                    }
+                    networkView.RPC(_callerMethod, RPCMode.OthersBuffered, data);
+                  
                 }
 
                 return true;
@@ -156,38 +107,6 @@ namespace Goga.UnityNetwork {
             }
 
             return false;
-        }
-
-        public bool RoleObserver(bool state, int senderID, bool broadcastToAll, bool allowLocalAction) {
-
-            RPCObject obj = new RPCObject(RPCType.Bool);
-            obj.boolData = state;
-
-            return this.RoleObserverBase(obj, senderID, broadcastToAll, allowLocalAction);
-        }
-
-        public bool RoleObserver(int state, int senderID, bool broadcastToAll, bool allowLocalAction) {
-            
-            RPCObject obj = new RPCObject(RPCType.Int);
-            obj.intData = state;
-
-            return this.RoleObserverBase(obj, senderID, broadcastToAll, allowLocalAction);
-        }
-
-        public bool RoleObserver(float state, int senderID, bool broadcastToAll, bool allowLocalAction) {
-            
-            RPCObject obj = new RPCObject(RPCType.Float);
-            obj.floatData = state;
-
-            return this.RoleObserverBase(obj, senderID, broadcastToAll, allowLocalAction);
-        }
-
-        public bool RoleObserver(string state, int senderID, bool broadcastToAll, bool allowLocalAction) {
-
-            RPCObject obj = new RPCObject(RPCType.String);
-            obj.stringData = state;
-
-            return this.RoleObserverBase(obj, senderID, broadcastToAll, allowLocalAction);
         }
 
     }
