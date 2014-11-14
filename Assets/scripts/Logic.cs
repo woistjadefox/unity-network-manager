@@ -7,6 +7,7 @@ using Goga.UnityNetwork;
 public class Logic : MonoBehaviour {
 
     public Manager uNet;
+    public Dealer dealer;
     public Lobby lobby;
     public GameObject prefabPlayer;
 
@@ -47,8 +48,9 @@ public class Logic : MonoBehaviour {
 
     }
 
-    public void InstantiateNewPlayer() {
+    public void InstantiateMyPlayer() {
 
+        this.dealer.RequestNetworkObject(PrefabType.Player, new Vector3(Random.Range(-8, 4), 0.6f, Random.Range(0, 5)), Quaternion.identity);
     }
 
     void OnStateChange(NetworkPeerType peerType) {

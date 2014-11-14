@@ -8,8 +8,11 @@ namespace Goga.UnityNetwork {
     public class Lobby : MonoBehaviour {
 
         // network handler
-        public Manager uNet;
-        public AutoDiscovery uDiscovery;
+        public Logic logic;
+        private Manager uNet;
+        private AutoDiscovery uDiscovery;
+        private Chat chat;
+
         public int minPlayers = 2;
         public int maxPlayers = 32;
         public int defaultPlayerSize = 2;
@@ -46,6 +49,10 @@ namespace Goga.UnityNetwork {
         }
 
         void Start() {
+
+            this.uNet = GetComponent<Manager>();
+            this.uDiscovery = GetComponent<AutoDiscovery>();
+            this.chat = GetComponent<Chat>();
 
             uNet.newState += new ChangedCliendState(OnStateChange);
             uNet.onAllPlayersReady += new OnAllPlayersReady(OnAllPlayersReady);
@@ -184,12 +191,7 @@ namespace Goga.UnityNetwork {
                     GUILayout.BeginHorizontal();
                     GUILayout.Label("LAN only", GUILayout.MaxWidth(80));
 
-                    if (uNet.isOnline) {
-                        lanGame = GUILayout.Toggle(lanGame, "");
-                    } else {
-                        lanGame = true;
-                        GUILayout.Toggle(lanGame, "");
-                    }
+                    lanGame = GUILayout.Toggle(lanGame, "");
 
                     GUILayout.EndHorizontal();
 
@@ -217,8 +219,8 @@ namespace Goga.UnityNetwork {
                             this._errorString = "choose a right Gamename!";
                         } else {
 
-                            this.CreateGame(lanGame, formGamename, formComment, this.defaultPlayerSize);
                             this._errorString = "";
+                            this.CreateGame(lanGame, formGamename, formComment, this.defaultPlayerSize);
                         }
 
                     }
@@ -291,53 +293,58 @@ namespace Goga.UnityNetwork {
                 }
 
                 if (GUILayout.Button(_readyState, GUILayout.MaxWidth(100))) {
-                    uNet.ToggleNetworkPlayerReadyState();
+                    this.ToggleReadyState();
                 }
 
                 GUILayout.EndArea();
 
 
                 // chat window
-                GUILayout.Window(53, new Rect(paddingLeft + 310, lobbyWin.height + 20, 295, 150), (int windowID) => {
 
-                    chatScrollPosition = GUILayout.BeginScrollView(chatScrollPosition, GUILayout.MinHeight(150));
+                if (this.chat && this.chat.enabled) {
 
-                    // autoscroll if new content is here
-                    if (_chatCounter < uNet.lobbyChat.Count) {
-                        chatScrollPosition.y = Mathf.Infinity;
-                        _chatCounter = uNet.lobbyChat.Count;
-                    }
+                    GUILayout.Window(53, new Rect(paddingLeft + 310, lobbyWin.height + 20, 295, 150), (int windowID) => {
 
-                    foreach (LobbyMessage msg in uNet.lobbyChat) {
-                        string _color = "teal";
+                        chatScrollPosition = GUILayout.BeginScrollView(chatScrollPosition, GUILayout.MinHeight(150));
 
-                        if (msg.author == uNet.playerName) {
-                            _color = "brown";
+                        // autoscroll if new content is here
+                        if (_chatCounter < chat.lobbyChat.Count) {
+                            chatScrollPosition.y = Mathf.Infinity;
+                            _chatCounter = chat.lobbyChat.Count;
                         }
 
-                        GUILayout.Box("<i><size=10><color=" + _color + ">" + msg.date.Hour + ":" + msg.date.Minute + " " + msg.author + ":</color></size></i> " + msg.content);
+                        foreach (LobbyMessage msg in chat.lobbyChat) {
+                            string _color = "teal";
+
+                            if (msg.author == uNet.playerName) {
+                                _color = "brown";
+                            }
+
+                            GUILayout.Box("<i><size=10><color=" + _color + ">" + msg.date.Hour + ":" + msg.date.Minute + " " + msg.author + ":</color></size></i> " + msg.content);
+                        }
+
+                        GUILayout.EndScrollView();
+
+                    }, "Chat", GUILayout.MinWidth(290));
+
+                    // chat form input
+                    GUILayout.BeginArea(new Rect(paddingLeft + 345, lobbyWin.height + 205, 285, 30));
+                    GUILayout.BeginHorizontal();
+
+                    GUI.SetNextControlName("ChatForm");
+                    _chatForm = GUILayout.TextField(_chatForm, 100, GUILayout.MaxWidth(215));
+
+                    if (GUILayout.Button("send", GUILayout.MaxWidth(40)) || GUI.GetNameOfFocusedControl() == "ChatForm" && Event.current.isKey && Event.current.keyCode == KeyCode.Return) {
+
+                        chat.SendLobbyChatMessage(_chatForm);
+                        _chatForm = "";
                     }
 
-                    GUILayout.EndScrollView();
+                    GUILayout.EndHorizontal();
+                    GUILayout.EndArea();
 
-                }, "Chat", GUILayout.MinWidth(290));
-
-                // chat form input
-                GUILayout.BeginArea(new Rect(paddingLeft + 345, lobbyWin.height + 205, 285, 30));
-                GUILayout.BeginHorizontal();
-
-                GUI.SetNextControlName("ChatForm");
-                _chatForm = GUILayout.TextField(_chatForm, 100, GUILayout.MaxWidth(215));
-
-                if (GUILayout.Button("send", GUILayout.MaxWidth(40)) || GUI.GetNameOfFocusedControl() == "ChatForm" && Event.current.isKey && Event.current.keyCode == KeyCode.Return) {
-
-                    uNet.SendLobbyChatMessage(_chatForm);
-                    _chatForm = "";
                 }
-
-                GUILayout.EndHorizontal();
-                GUILayout.EndArea();
-
+                
             }
 
 
@@ -359,17 +366,22 @@ namespace Goga.UnityNetwork {
 
                 if (GUILayout.Button("ok", GUILayout.MaxWidth(25)) || GUI.GetNameOfFocusedControl() == "NameForm" && Event.current.isKey && Event.current.keyCode == KeyCode.Return) {
 
-                    if (_nickname != uNet.playerName && _nickname != "" && _nickname != "MaxMuster" && _nickname.Length > 2) {
+                    if (_nickname != "" && _nickname != "MaxMuster" && _nickname.Length > 2) {
+
+                        if (_nickname == this.uNet.playerName)
+                            return;
 
                         Debug.Log("set new name");
 
-                        if (Network.peerType == NetworkPeerType.Client || Network.peerType == NetworkPeerType.Server) {
-                            uNet.SendLobbyChatMessage("changed name to '" + _nickname + "'");
+                        if (this.chat && this.chat.enabled) {
+
+                            if (Network.peerType == NetworkPeerType.Client || Network.peerType == NetworkPeerType.Server) {
+                                chat.SendLobbyChatMessage("changed name to '" + _nickname + "'");
+                            }
                         }
 
                         uNet.playerName = _nickname;
                         uNet.SpreadNetworkPlayer();
-
 
                     } else {
                         this._errorString = "Choose a right Nickname! Min. 3 characters";
@@ -413,6 +425,7 @@ namespace Goga.UnityNetwork {
 
         void OnAllPlayersReady() {
 
+   
             if (Network.peerType == NetworkPeerType.Server) {
 
                 if (uNet.connectedPlayers.Count >= this.minPlayers) {
@@ -423,17 +436,29 @@ namespace Goga.UnityNetwork {
                 } else {
                     this._errorString = "At least " + this.minPlayers + " players needed to start a game";
                 }
-            }
+            } 
         }
 
         public void CreateGame(bool lan, string name, string comment, float playerSize) {
 
             if (lan) {
                 this.joinedLanGame = true;
+            } else {
+
+                if (!uNet.isOnline) {
+
+                    this._errorString = "you need to be online to create a internet game!";
+                    return;
+                }
             }
 
             uNet.RegisterGame(lan, name, comment, playerSize);
             uNet.UpdateHostList();
+        }
+
+        public void ToggleReadyState() {
+            uNet.ToggleNetworkPlayerReadyState();
+            //this.logic.InstantiateMyPlayer();
         }
 
         public void Join(HostData host) {

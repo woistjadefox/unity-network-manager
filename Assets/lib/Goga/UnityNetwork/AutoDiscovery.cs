@@ -29,7 +29,7 @@ namespace Goga.UnityNetwork {
 
     public class AutoDiscovery : MonoBehaviour {
 
-        public Manager uNet;
+        private Manager uNet;
         public int remotePort = 19784;
         public float sendRate = 3f;
         public int timeoutThreshold = 5;
@@ -49,6 +49,7 @@ namespace Goga.UnityNetwork {
 
         void Start() {
 
+            this.uNet = GetComponent<Manager>();
             this.uNet.newState += new ChangedCliendState(OnStateChange);
             this.StartReceivingIp();
         }

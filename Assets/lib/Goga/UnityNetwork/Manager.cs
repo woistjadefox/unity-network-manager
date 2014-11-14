@@ -13,18 +13,6 @@ namespace Goga.UnityNetwork {
         public bool ready = false;
     }
 
-    public class LobbyMessage {
-
-        public string author;
-        public string content;
-        public DateTime date;
-
-        public LobbyMessage(string content) {
-            this.content = content;
-            this.date = DateTime.Now;
-        }
-
-    }
 
     public delegate void ChangedCliendState(NetworkPeerType state);
     public delegate void OnAllPlayersReady();
@@ -44,7 +32,7 @@ namespace Goga.UnityNetwork {
         private bool _isDisconnecting;
 
         public Dictionary<string, NetPlayer> connectedPlayers = new Dictionary<string, NetPlayer>();
-        public List<LobbyMessage> lobbyChat = new List<LobbyMessage>();
+
 
         private NetworkPeerType lastPeerType;
         public event ChangedCliendState newState;
@@ -56,11 +44,12 @@ namespace Goga.UnityNetwork {
         private HostData actualHost = null;
         private HostDataLAN actualHostLAN = null;
 
-        private JsonReader jReader = new JsonReader();
-        private JsonWriter jWriter = new JsonWriter();
+        public JsonReader jReader = new JsonReader();
+        public JsonWriter jWriter = new JsonWriter();
 
         /* addons */
         private HostMigration migration;
+        private Chat chat;
 
 
         void Awake() {
@@ -90,6 +79,12 @@ namespace Goga.UnityNetwork {
             if (this.migration && !this.migration.enabled) {
                 this.migration = null;
             }
+
+            // chat plugin
+            this.chat = GetComponent<Chat>();
+            if (this.chat && !this.chat.enabled) {
+                this.chat = null;
+            }
         }
 
         #region getter & setter
@@ -116,6 +111,7 @@ namespace Goga.UnityNetwork {
 
         // additional connecting function since NetworkPeerType.Connecting is not working
         public void SetIsConnecting(bool state) {
+
             this.isConnecting = state;
         }
 
@@ -264,9 +260,15 @@ namespace Goga.UnityNetwork {
         void StateChanged() {
 
             switch (Network.peerType) {
+
                 case NetworkPeerType.Disconnected:
+
+                    Network.isMessageQueueRunning = false;
                     this._isDisconnecting = false;
                     this.CleanUp();
+                    break;
+
+                case NetworkPeerType.Connecting:
                     break;
             }
 
@@ -390,18 +392,7 @@ namespace Goga.UnityNetwork {
             }
         }
 
-        public void SendLobbyChatMessage(string message) {
 
-            if (message != "") {
-
-                LobbyMessage msg = new LobbyMessage(message);
-                msg.author = this.playerName;
-
-                string _msg = jWriter.Write(msg);
-
-                networkView.RPC("GetLobbyChatMessage", RPCMode.All, _msg);
-            }
-        }
 
         #endregion RPC call functions
 
@@ -448,24 +439,6 @@ namespace Goga.UnityNetwork {
             
         }
 
-        [RPC]
-        void GetLobbyChatMessage(string message) {
-
-            LobbyMessage _msg = jReader.Read<LobbyMessage>(message);
-            lobbyChat.Add(_msg);
-        }
-
-        /*
-        [RPC]
-        void InstantiateObj(string playerObj) {
-
-            UnityNetworkPlayer _player = jReader.Read<UnityNetworkPlayer>(playerObj);
-
-            if (!this.connectedPlayers.ContainsKey(_player.guid)) {
-
-                this.connectedPlayers.Add(_player.guid, _player);
-            }
-        }*/
 
         #endregion RPC functions
 
@@ -503,7 +476,11 @@ namespace Goga.UnityNetwork {
 
 
             if (!this.isReconnecting) {
-                this.lobbyChat.Clear();
+
+                if (this.chat) {
+                    this.chat.ClearMessages();
+                }
+
                 this.SetActualHost(null);
                 this.SetActualHostLAN(null);
                 this.isLanOnly = false;
@@ -573,9 +550,7 @@ namespace Goga.UnityNetwork {
 
             }
 
-        }
-
-        
+        } 
 
         void OnFailedToConnect() {
             this.SetIsConnecting(false);
@@ -592,12 +567,8 @@ namespace Goga.UnityNetwork {
                 networkView.RPC("AddConnectedPlayer", player, _existingPlayerJson);
             }
 
-            // send player all chat messages
-            foreach (LobbyMessage msg in lobbyChat) {
 
-                string _msg = jWriter.Write(msg);
-                networkView.RPC("GetLobbyChatMessage", player, _msg);
-            }
+            //GetComponent<Dealer>().InstantiateAllNetworkObjects(PrefabType.Player, player);
         }
 
         void OnPlayerDisconnected(NetworkPlayer player) {

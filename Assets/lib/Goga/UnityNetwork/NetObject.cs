@@ -5,17 +5,32 @@ using System.Diagnostics;
 
 namespace Goga.UnityNetwork {
 
+    public class RPCCall {
+
+        public string method;
+        public RPCMode mode;
+        public object[] data;
+
+        public RPCCall(string method, RPCMode mode, object[] data) {
+
+            this.method = method;
+            this.mode = mode;
+            this.data = data;
+        }
+    }
+
     [RequireComponent(typeof(NetworkView))]
 
     public class NetObject : MonoBehaviour {
 
         private Manager uNet;
         public string playerGuid;
+        public PrefabType type;
 
         private StackFrame _frame;
         private string _callerMethod;
 
-        public Dictionary<string, System.Action> lastRpcCalls = new Dictionary<string, System.Action>();
+        public Dictionary<string, RPCCall> lastRPCCalls = new Dictionary<string, RPCCall>();
 
         void Awake() {
 
@@ -34,11 +49,14 @@ namespace Goga.UnityNetwork {
             this.playerGuid = guid;
         }
 
-        public void SendLastRpcCalls() {
+        public void SendRPCCall(RPCCall call){
+            networkView.RPC(call.method, call.mode, call.data);
+        }
 
-            foreach (System.Action call in lastRpcCalls.Values) {
+        public void SendLastRPCCalls() {
 
-                call();
+            foreach (RPCCall call in lastRPCCalls.Values) {
+                this.SendRPCCall(call);
             }
         }
 
@@ -69,12 +87,8 @@ namespace Goga.UnityNetwork {
                 // set senderID for client
                 data[data.Length-1] = 0;
 
-                this.lastRpcCalls[_callerMethod] = new System.Action(() => {
-                    networkView.RPC(_callerMethod, RPCMode.Server, data);
-                });
-
-                this.lastRpcCalls[_callerMethod](); // run rpc
-
+                this.lastRPCCalls[_callerMethod] = new RPCCall(_callerMethod, RPCMode.Server, data);
+                this.SendRPCCall(this.lastRPCCalls[_callerMethod]);
 
                 if (allowLocalAction) {
                     return true;

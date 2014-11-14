@@ -99,7 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   clientSideInterpolation: 0
-  m_InterpolationBackTime: .05000000074505806
+  m_InterpolationBackTime: .075000002980232239
   m_ExtrapolationLimit: .5
   positionCorrectionThreshold: .150000006
   positionCorrectionSpeed: 1
