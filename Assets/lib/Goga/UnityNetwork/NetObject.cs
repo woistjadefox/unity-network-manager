@@ -14,7 +14,7 @@ namespace Goga.UnityNetwork {
         public Manager uNet;
 
         public string playerGuid;
-        public PrefabType type;
+        public NetworkPrefabs type;
         public int bufferItems = 0;
 
         private StackFrame _frame;

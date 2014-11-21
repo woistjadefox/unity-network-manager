@@ -46,6 +46,8 @@ namespace Goga.UnityNetwork {
         public Chat chat;
         [HideInInspector]
         public Dealer dealer;
+        [HideInInspector]
+        public AutoDiscovery discovery;
 
 
         void Awake() {
@@ -69,6 +71,12 @@ namespace Goga.UnityNetwork {
             StartCoroutine(CheckInternetConnection());
 
             /* load addons ******************************/
+
+            // dealer plugin
+            this.discovery = GetComponent<AutoDiscovery>();
+            if (this.discovery && !this.discovery.enabled) {
+                this.discovery = null;
+            }
 
             // dealer plugin
             this.dealer = GetComponent<Dealer>();
@@ -512,7 +520,6 @@ namespace Goga.UnityNetwork {
                     if (this.isReconnecting && this.migration.isNewServer) {
 
                         if (!this.netPlayers.Exists(obj.playerGuid)) {
-                            Debug.Log("destroy ex server obj:" + obj.gameObject.name);
                             Destroy(obj.gameObject);
                         }
 
@@ -586,7 +593,7 @@ namespace Goga.UnityNetwork {
             }
 
             if (this.dealer) {
-                GetComponent<Dealer>().InstantiateAllNetworkObjects(PrefabType.Player, player);
+                GetComponent<Dealer>().InstantiateAllNetworkObjects(NetworkPrefabs.Player, player);
             }
 
         }

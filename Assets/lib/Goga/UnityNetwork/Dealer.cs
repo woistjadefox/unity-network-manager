@@ -4,31 +4,27 @@ using System.Collections.Generic;
 
 namespace Goga.UnityNetwork {
 
-    public enum PrefabType {
-        Player
+    public enum NetworkPrefabs {
+        Player, Weapon, Bullet, Slot1, Slot2, Slot3, Slot4, Slot5, Slot6, Slot7, Slot8, Slot9, Slot10
     }
 
     public class Dealer : MonoBehaviour {
 
         public Manager uNet;
-        public GameObject prefabPlayer;
 
-        public List<RPCCallObject> rpcCallObjectBuffer = new List<RPCCallObject>();
+        private Dictionary<NetworkPrefabs, GameObject> netPrefabs = new Dictionary<NetworkPrefabs, GameObject>();
 
-
-        // Use this for initialization
         void Start() {
             uNet.newState += new ChangedCliendState(OnStateChange);
         }
 
-        GameObject GetPrefab(PrefabType type) {
+        public void AddPrefab(NetworkPrefabs type, GameObject prefab) {
 
-            switch (type) {
-                case PrefabType.Player:
-                    return this.prefabPlayer;
-            }
+            this.netPrefabs.Add(type, prefab);
+        }
 
-            return null;
+        GameObject GetPrefab(NetworkPrefabs type) {
+            return this.netPrefabs[type];
         }
 
         public void SpreadNetObjRPCBuffersToPlayer(NetworkPlayer player) {
@@ -48,14 +44,14 @@ namespace Goga.UnityNetwork {
                 viewId = Network.AllocateViewID();
             }
 
-            GameObject _prefab = this.GetPrefab((PrefabType)prefab);
+            GameObject _prefab = this.GetPrefab((NetworkPrefabs)prefab);
 
             GameObject _obj = Instantiate(_prefab, pos, rot) as GameObject;
 
             // set player name
             _obj.networkView.viewID = viewId;
             _obj.GetComponent<NetObject>().playerGuid = playerId;
-            _obj.GetComponent<NetObject>().type = (PrefabType)prefab;
+            _obj.GetComponent<NetObject>().type = (NetworkPrefabs)prefab;
 
             if (Network.isServer) {
 
@@ -64,7 +60,7 @@ namespace Goga.UnityNetwork {
 
         }
 
-        public void RequestNetworkObject(PrefabType prefab, Vector3 pos, Quaternion rot) {
+        public void RequestNetworkObject(NetworkPrefabs prefab, Vector3 pos, Quaternion rot) {
 
             if (Network.isServer) {
 
@@ -76,7 +72,7 @@ namespace Goga.UnityNetwork {
 
         }
 
-        public void InstantiateAllNetworkObjects(PrefabType type, NetworkPlayer targetPlayer) {
+        public void InstantiateAllNetworkObjects(NetworkPrefabs type, NetworkPlayer targetPlayer) {
 
             NetObject[] players = FindObjectsOfType<NetObject>();
 

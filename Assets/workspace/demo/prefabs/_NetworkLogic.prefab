@@ -11,8 +11,9 @@ GameObject:
   - 148: {fileID: 14800000}
   - 114: {fileID: 11400000}
   - 114: {fileID: 11400002}
+  - 114: {fileID: 11400008}
+  - 114: {fileID: 11400010}
   - 114: {fileID: 11400006}
-  - 114: {fileID: 11400004}
   m_Layer: 0
   m_Name: _NetworkLogic
   m_TagString: Untagged
@@ -27,10 +28,11 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 100000}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -.747243166, y: .604911089, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
+  m_RootOrder: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -52,6 +54,10 @@ MonoBehaviour:
   isConnecting: 0
   isReconnecting: 0
   isLanOnly: 0
+  migration: {fileID: 0}
+  chat: {fileID: 0}
+  dealer: {fileID: 0}
+  discovery: {fileID: 0}
 --- !u!114 &11400002
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -63,41 +69,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a31f1c3bdc05a7c47b7e281bfe2e28f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uNet: {fileID: 11400000}
   remotePort: 19784
   sendRate: 3
   timeoutThreshold: 5
---- !u!114 &11400004
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 100000}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3fbd135874c51184f8d54446b08e2154, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  uNet: {fileID: 11400000}
-  uDiscovery: {fileID: 11400002}
-  minPlayers: 2
-  maxPlayers: 32
-  defaultPlayerSize: 2
-  paddingLeft: 10
-  paddingTop: 10
 --- !u!114 &11400006
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 100000}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 94a6c7825cac2df46b0352e0f988b5ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   waitForRecreateServer: 3
   waitForReconnect: 5
+  isNewServer: 0
+--- !u!114 &11400008
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebe62576ac7cb0a4e83d256dde64f148, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &11400010
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68d8fb7df9f70aa4aa4610e49b82eb5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uNet: {fileID: 11400000}
 --- !u!148 &14800000
 NetworkView:
   m_ObjectHideFlags: 1
