@@ -2,35 +2,26 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Goga.Tools;
 
 namespace Goga.UnityNetwork {
-
-    public class RPCCall {
-
-        public string method;
-        public RPCMode mode;
-        public object[] data;
-
-        public RPCCall(string method, RPCMode mode, object[] data) {
-
-            this.method = method;
-            this.mode = mode;
-            this.data = data;
-        }
-    }
 
     [RequireComponent(typeof(NetworkView))]
 
     public class NetObject : MonoBehaviour {
 
-        private Manager uNet;
+        [HideInInspector]
+        public Manager uNet;
+
         public string playerGuid;
         public PrefabType type;
+        public int bufferItems = 0;
 
         private StackFrame _frame;
         private string _callerMethod;
 
         public Dictionary<string, RPCCall> lastRPCCalls = new Dictionary<string, RPCCall>();
+        public MaxStack<RPCCall> rpcCallBuffer = new MaxStack<RPCCall>(50);
 
         void Awake() {
 
@@ -39,10 +30,10 @@ namespace Goga.UnityNetwork {
 
         void Start() {
             this.uNet = FindObjectOfType<Manager>();
+            this.uNet.newState += new ChangedCliendState(OnStateChange);
             Network.isMessageQueueRunning = true;
         }
 
-        // set the owner of the object
         [RPC]
         public void SetOwner(string guid) {
 
@@ -50,6 +41,7 @@ namespace Goga.UnityNetwork {
         }
 
         public void SendRPCCall(RPCCall call){
+
             networkView.RPC(call.method, call.mode, call.data);
         }
 
@@ -60,8 +52,12 @@ namespace Goga.UnityNetwork {
             }
         }
 
-        public Manager GetManager() {
-            return this.uNet;
+        public void SendBufferedRPCCallsToPlayer(NetworkPlayer player) {
+
+            // send all rpc calls to player
+            foreach(RPCCall call in rpcCallBuffer){
+                networkView.RPC(call.method, player, call.data);
+            }
         }
 
         public bool IsMine() {
@@ -82,30 +78,42 @@ namespace Goga.UnityNetwork {
             _callerMethod = _frame.GetMethod().Name;
 
 
-            if (Network.isClient && this.IsMine() && senderID != 1) {
-
-                // set senderID for client
-                data[data.Length-1] = 0;
+            if (Network.isClient) {
 
                 this.lastRPCCalls[_callerMethod] = new RPCCall(_callerMethod, RPCMode.Server, data);
-                this.SendRPCCall(this.lastRPCCalls[_callerMethod]);
 
-                if (allowLocalAction) {
-                    return true;
+                if (Network.isClient && this.IsMine() && senderID != 1) {
+
+                    // set senderID for client
+                    data[data.Length - 1] = 0;
+
+                    this.SendRPCCall(this.lastRPCCalls[_callerMethod]);
+
+                    if (allowLocalAction) {
+                        return true;
+                    }
                 }
+
+                // save call in buffer when message comes from server
+                if (senderID == 1) {
+                    this.rpcCallBuffer.Push(new RPCCall(_callerMethod, RPCMode.Server, data));
+                }
+
             }
 
             if (Network.isServer) {
 
                 if (broadcastToAll) {
-
-                    UnityEngine.Debug.Log("server broadcasting: " + _callerMethod);
-
+                        
                     // set senderID for server
                     data[data.Length-1] = 1;
 
-                    networkView.RPC(_callerMethod, RPCMode.OthersBuffered, data);
-                  
+                    // store last call
+                    this.lastRPCCalls[_callerMethod] = new RPCCall(_callerMethod, RPCMode.Others, data);
+                    this.SendRPCCall(this.lastRPCCalls[_callerMethod]);
+
+                    // save call in buffer
+                    this.rpcCallBuffer.Push(this.lastRPCCalls[_callerMethod]);
                 }
 
                 return true;
@@ -121,6 +129,29 @@ namespace Goga.UnityNetwork {
             }
 
             return false;
+        }
+
+        void FixedUpdate() {
+
+            this.bufferItems = this.rpcCallBuffer.Count;
+        }
+
+        void OnStateChange(NetworkPeerType peerType) {
+
+            switch (peerType) {
+
+                case NetworkPeerType.Disconnected:
+
+                    /* since all objects get deleted from disconnected clients it's not needed to clear buffer
+                     * 
+                    if (!this.uNet.migration || !this.uNet.migration.isNewServer) {
+                        this.lastRPCCalls.Clear();
+                        this.rpcCallBuffer.Clear();
+                    }*/
+
+                    break;
+            }
+
         }
 
     }

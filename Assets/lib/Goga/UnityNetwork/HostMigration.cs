@@ -1,15 +1,21 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Goga.UnityNetwork {
 
     public class HostMigration : MonoBehaviour {
 
+        private Manager uNet;
+
         public float waitForRecreateServer = 3;
         public float waitForReconnect = 5;
 
-        private Manager uNet;
+        [HideInInspector]
+        public bool isNewServer = false;
 
+        
         void Start() {
 
             this.uNet = GetComponent<Manager>();
@@ -18,20 +24,13 @@ namespace Goga.UnityNetwork {
        public void Migrate() {
 
             this.uNet.isReconnecting = true;
+     
+            // remove old server from top and shift 
+            this.uNet.netPlayers.GetList().RemoveAt(0);
 
-            // remove actual server from the top
-            IEnumerator enumeratorLast = this.uNet.connectedPlayers.Values.GetEnumerator();
-            enumeratorLast.MoveNext();
-            NetPlayer actualServer = (NetPlayer)enumeratorLast.Current;
-            this.uNet.connectedPlayers.Remove(actualServer.guid);
+            NetPlayer newServerPlayer = this.uNet.netPlayers.GetList()[0];
 
-            // get new server from the top
-            IEnumerator enumerator = this.uNet.connectedPlayers.Values.GetEnumerator();
-            enumerator.MoveNext();
-
-            if (enumerator.Current != null) {
-
-                NetPlayer newServerPlayer = (NetPlayer)enumerator.Current;
+            if (newServerPlayer != null) {
 
                 string newServerGUID = newServerPlayer.guid;
 
@@ -39,6 +38,7 @@ namespace Goga.UnityNetwork {
                 if (newServerGUID == Network.player.guid) {
 
                     Debug.Log("I have to be the new Server!");
+                    this.isNewServer = true;
                     StartCoroutine(this.StartNewServer());
 
                 } else {
@@ -47,6 +47,7 @@ namespace Goga.UnityNetwork {
                     StartCoroutine(this.ReconnectToNewServer(newServerGUID));
                 }
             }
+   
         }
 
         IEnumerator StartNewServer() {
@@ -59,37 +60,46 @@ namespace Goga.UnityNetwork {
                 this.uNet.RegisterGame(false, this.uNet.GetActualHost().gameName, this.uNet.GetActualHost().comment, this.uNet.GetActualHost().playerLimit);
             }
 
-            this.uNet.isReconnecting = false;
+            // get ownership of all objects
+            this.GetOwnerShip();
 
         }
 
         IEnumerator ReconnectToNewServer(string guid) {
 
-            Debug.Log("connecting to new server...");
             yield return new WaitForSeconds(this.waitForReconnect);
 
             this.uNet.ConnectPeer(guid);
 
+        }
+
+        void GetOwnerShip() {
+
+            NetObject[] objs = FindObjectsOfType<NetObject>() as NetObject[];
+
+            foreach (NetObject obj in objs) {
+                obj.networkView.viewID = Network.AllocateViewID();
+            }
+
+        }
+
+        void OnServerInitialized() {
+
+            if (!enabled) {
+                return;
+            }
+
             this.uNet.isReconnecting = false;
+            this.isNewServer = false;
         }
 
         void OnConnectedToServer() {
 
-            Debug.Log("HostMigration: Reconnect to the server done.. send rpc buffer from netObjects");
-
-            /*
-            NetObject[] playerObjs = FindObjectsOfType<NetObject>() as NetObject[];
-
-            foreach (NetObject obj in playerObjs) {
-
-                if (obj.playerGuid == Network.player.guid) {
-
-                    obj.SendLastRpcCalls();
-                }
-
+            if (!enabled) {
+                return;
             }
-            */
 
+            Debug.Log("HostMigration: Reconnect to the server done.. send rpc buffer from netObjects");
             
         }
     }

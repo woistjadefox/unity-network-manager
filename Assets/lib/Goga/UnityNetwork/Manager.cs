@@ -7,13 +7,6 @@ using JsonFx.Json;
 
 namespace Goga.UnityNetwork {
 
-    public class NetPlayer {
-        public string guid;
-        public string name;
-        public bool ready = false;
-    }
-
-
     public delegate void ChangedCliendState(NetworkPeerType state);
     public delegate void OnAllPlayersReady();
 
@@ -31,8 +24,7 @@ namespace Goga.UnityNetwork {
         public bool isReconnecting;
         private bool _isDisconnecting;
 
-        public Dictionary<string, NetPlayer> connectedPlayers = new Dictionary<string, NetPlayer>();
-
+        public NetPlayerController netPlayers = new NetPlayerController();
 
         private NetworkPeerType lastPeerType;
         public event ChangedCliendState newState;
@@ -48,8 +40,12 @@ namespace Goga.UnityNetwork {
         public JsonWriter jWriter = new JsonWriter();
 
         /* addons */
-        private HostMigration migration;
-        private Chat chat;
+        [HideInInspector]
+        public HostMigration migration;
+        [HideInInspector]
+        public Chat chat;
+        [HideInInspector]
+        public Dealer dealer;
 
 
         void Awake() {
@@ -74,6 +70,12 @@ namespace Goga.UnityNetwork {
 
             /* load addons ******************************/
 
+            // dealer plugin
+            this.dealer = GetComponent<Dealer>();
+            if (this.dealer && !this.dealer.enabled) {
+                this.dealer = null;
+            }
+
             // migration plugin
             this.migration = GetComponent<HostMigration>();
             if (this.migration && !this.migration.enabled) {
@@ -85,6 +87,7 @@ namespace Goga.UnityNetwork {
             if (this.chat && !this.chat.enabled) {
                 this.chat = null;
             }
+
         }
 
         #region getter & setter
@@ -156,8 +159,8 @@ namespace Goga.UnityNetwork {
         // get own player object
         public NetPlayer GetNetworkPlayer() {
 
-            if (this.connectedPlayers.ContainsKey(Network.player.guid)) {
-                return this.connectedPlayers[Network.player.guid];
+            if (this.netPlayers.Exists(Network.player.guid)) {
+                return this.netPlayers.Get(Network.player.guid);
 
             }
             else {
@@ -168,8 +171,8 @@ namespace Goga.UnityNetwork {
         // get specific player object
         public NetPlayer GetNetworkPlayer(string guid) {
 
-            if (this.connectedPlayers.ContainsKey(guid)) {
-                return this.connectedPlayers[guid];
+            if (this.netPlayers.Exists(guid)) {
+                return this.netPlayers.Get(guid);
 
             } else {
                 return new NetPlayer() { guid = "0", name = "000", ready = false };
@@ -283,16 +286,16 @@ namespace Goga.UnityNetwork {
         bool AllPlayersReadyCheck() {
 
             if (this.isLanOnly) {
-                if (this.GetActualHostLAN().playerLimit != this.connectedPlayers.Count) {
+                if (this.GetActualHostLAN().playerLimit != this.netPlayers.GetList().Count) {
                     return false;
                 }
             } else {
-                if (this.GetActualHost().playerLimit != this.connectedPlayers.Count) {
+                if (this.GetActualHost().playerLimit != this.netPlayers.GetList().Count) {
                     return false;
                 }
             }
 
-            foreach (NetPlayer player in this.connectedPlayers.Values) {
+            foreach (NetPlayer player in this.netPlayers.GetList()) {
 
                 if (!player.ready) {
                     return false;
@@ -341,7 +344,9 @@ namespace Goga.UnityNetwork {
             _serverHost.guid = Network.player.guid;
             _serverHost.name = this.playerName;
 
-            this.connectedPlayers.Add(Network.player.guid, _serverHost);
+            if (!this.netPlayers.Exists(Network.player.guid)) {
+                this.netPlayers.Add(_serverHost);
+            }
 
         }
 
@@ -371,6 +376,9 @@ namespace Goga.UnityNetwork {
 
         public void ConnectPeer(string guid) {
 
+            this.SetIsConnecting(true);
+
+
             if (this.isLanOnly) {
                 Network.Connect(this.GetUnityNetworkPlayer(guid).ipAddress, this.serverPort);
 
@@ -383,9 +391,9 @@ namespace Goga.UnityNetwork {
         #region RPC call functions
         public void SpreadNetworkPlayer() {
 
-            if (this.connectedPlayers.ContainsKey(Network.player.guid)) {
+            if (this.netPlayers.Exists(Network.player.guid)) {
 
-                this.connectedPlayers[Network.player.guid].name = this.playerName;
+                this.netPlayers.Get(Network.player.guid).name = this.playerName;
 
                 string _player = jWriter.Write(this.GetNetworkPlayer());
                 networkView.RPC("UpdateNetworkPlayer", RPCMode.All, _player);
@@ -403,18 +411,20 @@ namespace Goga.UnityNetwork {
 
             NetPlayer _player = jReader.Read<NetPlayer>(playerObj);
 
-            if (!this.connectedPlayers.ContainsKey(_player.guid)) {
+            if (!this.netPlayers.Exists(_player.guid)) {
 
-                this.connectedPlayers.Add(_player.guid, _player);
+                this.netPlayers.Add(_player);
             }
+
+            this.netPlayers.SortList();
         }
 
         [RPC]
         void RemoveConnectedPlayer(string guid) {
 
-            if (this.connectedPlayers.ContainsKey(guid)) {
+            if (this.netPlayers.Exists(guid)) {
 
-                this.connectedPlayers.Remove(guid);
+                this.netPlayers.Remove(guid);
             }
         }
 
@@ -431,8 +441,10 @@ namespace Goga.UnityNetwork {
             NetPlayer _player = jReader.Read<NetPlayer>(playerObj);
 
             // check if player exists, if not create it
-            if (this.connectedPlayers.ContainsKey(_player.guid)) {
-                this.connectedPlayers[_player.guid] = _player;
+            if (this.netPlayers.Exists(_player.guid)) {
+
+                this.netPlayers.Update(_player.guid, _player);
+
             } else {
                 this.AddConnectedPlayer(playerObj);
             }
@@ -472,8 +484,6 @@ namespace Goga.UnityNetwork {
         void CleanUp() {
 
             this.RemoveAllNetworkObjects();
-            this.connectedPlayers.Clear();
-
 
             if (!this.isReconnecting) {
 
@@ -481,6 +491,7 @@ namespace Goga.UnityNetwork {
                     this.chat.ClearMessages();
                 }
 
+                this.netPlayers.GetList().Clear();
                 this.SetActualHost(null);
                 this.SetActualHostLAN(null);
                 this.isLanOnly = false;
@@ -495,11 +506,17 @@ namespace Goga.UnityNetwork {
 
             foreach (NetObject obj in playerObjs) {
                 
-                // remove only disconnected objs if reconnecting
-                if (this.isReconnecting) {
+                if(this.migration){
 
-                    if (!this.connectedPlayers.ContainsKey(obj.playerGuid)) {
-                        Debug.Log("destroy ex server obj:" + obj.gameObject.name);
+                    // remove only disconnected objs if reconnecting as server
+                    if (this.isReconnecting && this.migration.isNewServer) {
+
+                        if (!this.netPlayers.Exists(obj.playerGuid)) {
+                            Debug.Log("destroy ex server obj:" + obj.gameObject.name);
+                            Destroy(obj.gameObject);
+                        }
+
+                    } else {
                         Destroy(obj.gameObject);
                     }
 
@@ -507,7 +524,6 @@ namespace Goga.UnityNetwork {
 
                     Destroy(obj.gameObject);
                 }
-                    
 
             }
         }
@@ -536,7 +552,8 @@ namespace Goga.UnityNetwork {
 
             if (!this.migration || Network.isServer || this._isDisconnecting) {
 
-                Debug.Log("i'm disconnecting, just let me go..");
+                Debug.Log("disconnected from server");
+                this.isReconnecting = false;
                 this.SetActualHost(null);
                 this.SetActualHostLAN(null);
 
@@ -556,19 +573,22 @@ namespace Goga.UnityNetwork {
             this.SetIsConnecting(false);
             this.SetActualHost(null);
             this.SetActualHostLAN(null);
+            this.isReconnecting = false;
         }
 
         void OnPlayerConnected(NetworkPlayer player) {
 
             // tell the player who is in
-            foreach (NetPlayer existingPlayer in connectedPlayers.Values) {
+            foreach (NetPlayer existingPlayer in netPlayers.GetList()) {
 
                 string _existingPlayerJson = jWriter.Write(existingPlayer);
                 networkView.RPC("AddConnectedPlayer", player, _existingPlayerJson);
             }
 
+            if (this.dealer) {
+                GetComponent<Dealer>().InstantiateAllNetworkObjects(PrefabType.Player, player);
+            }
 
-            //GetComponent<Dealer>().InstantiateAllNetworkObjects(PrefabType.Player, player);
         }
 
         void OnPlayerDisconnected(NetworkPlayer player) {

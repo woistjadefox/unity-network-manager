@@ -13,7 +13,6 @@ public class Logic : MonoBehaviour {
 
     private bool gameRunning;
 
-	// Use this for initialization
 	void Start () {
 
         this.gameRunning = false;
@@ -27,22 +26,9 @@ public class Logic : MonoBehaviour {
 
     public void StartGame() {
 
-
         if (!this.IsGameRunning()) {
 
             Debug.Log("SERVER: start game");
-
-
-            // instantiate client players
-            foreach (NetPlayer player in uNet.connectedPlayers.Values) {
-
-                GameObject _player = Network.Instantiate(this.prefabPlayer, new Vector3(Random.Range(-8, 4), 0.6f, Random.Range(0, 5)), Quaternion.identity, 0) as GameObject;
-
-                // tell player about it's property
-                _player.networkView.RPC("SetOwner", RPCMode.AllBuffered, player.guid);
-
-            }
-
             this.gameRunning = true;
         }
 

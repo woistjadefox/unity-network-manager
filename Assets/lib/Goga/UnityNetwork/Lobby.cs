@@ -99,6 +99,10 @@ namespace Goga.UnityNetwork {
                 GUILayout.Window(97, new Rect((Screen.width) - 260, (Screen.height) - 110, 250, 50), (int windowID) => {
 
                     GUILayout.Box("<b>Connecting...</b>", GUILayout.MaxWidth(250));
+                    
+                    if (GUILayout.Button("cancel")) {
+                        this.Disconnect();
+                    }
 
                 }, "Connecting", GUILayout.MaxWidth(250), GUILayout.MaxHeight(200));
             }
@@ -258,9 +262,9 @@ namespace Goga.UnityNetwork {
 
 
                     // list players
-                    if (uNet.connectedPlayers.Count > 0) {
+                    if (uNet.netPlayers.GetList().Count > 0) {
 
-                        foreach (NetPlayer player in uNet.connectedPlayers.Values) {
+                        foreach (NetPlayer player in uNet.netPlayers.GetList()) {
 
                             GUILayout.BeginHorizontal();
 
@@ -428,7 +432,7 @@ namespace Goga.UnityNetwork {
    
             if (Network.peerType == NetworkPeerType.Server) {
 
-                if (uNet.connectedPlayers.Count >= this.minPlayers) {
+                if (uNet.netPlayers.GetList().Count >= this.minPlayers) {
 
                     Debug.Log("all players are ready");
                     GameObject.Find("_Logic").GetComponent<Logic>().StartGame();
@@ -458,7 +462,7 @@ namespace Goga.UnityNetwork {
 
         public void ToggleReadyState() {
             uNet.ToggleNetworkPlayerReadyState();
-            //this.logic.InstantiateMyPlayer();
+            this.logic.InstantiateMyPlayer();
         }
 
         public void Join(HostData host) {

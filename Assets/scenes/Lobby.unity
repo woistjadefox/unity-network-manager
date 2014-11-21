@@ -136,6 +136,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
+  m_RootOrder: 3
 --- !u!1 &447105967
 GameObject:
   m_ObjectHideFlags: 0
@@ -150,6 +151,7 @@ GameObject:
   - 114: {fileID: 447105972}
   - 114: {fileID: 447105974}
   - 114: {fileID: 447105975}
+  - 114: {fileID: 447105973}
   m_Layer: 0
   m_Name: _NetworkLogic
   m_TagString: Untagged
@@ -179,6 +181,9 @@ MonoBehaviour:
   isConnecting: 0
   isReconnecting: 0
   isLanOnly: 0
+  migration: {fileID: 0}
+  chat: {fileID: 0}
+  dealer: {fileID: 0}
 --- !u!114 &447105969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -205,6 +210,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
+  m_RootOrder: 1
 --- !u!148 &447105971
 NetworkView:
   m_ObjectHideFlags: 0
@@ -236,6 +242,20 @@ MonoBehaviour:
   defaultPlayerSize: 2
   paddingLeft: 10
   paddingTop: 10
+--- !u!114 &447105973
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 447105967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94a6c7825cac2df46b0352e0f988b5ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  waitForRecreateServer: 3
+  waitForReconnect: 5
+  isNewServer: 0
 --- !u!114 &447105974
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -315,6 +335,10 @@ Prefab:
       propertyPath: logic
       value: 
       objectReference: {fileID: 1508230334}
+    - target: {fileID: 400000, guid: 17d52e7c286b44646932d12a63556482, type: 2}
+      propertyPath: m_RootOrder
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 11400006, guid: 17d52e7c286b44646932d12a63556482, type: 2}
   m_ParentPrefab: {fileID: 100100000, guid: 17d52e7c286b44646932d12a63556482, type: 2}
@@ -388,8 +412,11 @@ Camera:
     m_Bits: 4294967295
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
   m_HDR: 0
   m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: .0219999999
 --- !u!4 &789333931
 Transform:
   m_ObjectHideFlags: 0
@@ -401,6 +428,7 @@ Transform:
   m_LocalScale: {x: 1.10652208, y: 1.78473151, z: 1.9371891}
   m_Children: []
   m_Father: {fileID: 0}
+  m_RootOrder: 4
 --- !u!1001 &1428936861
 Prefab:
   m_ObjectHideFlags: 0
@@ -447,6 +475,10 @@ Prefab:
     - target: {fileID: 100000, guid: 04ca504048cf6564d9a2e9ab4b358fd9, type: 2}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 04ca504048cf6564d9a2e9ab4b358fd9, type: 2}
+      propertyPath: m_RootOrder
+      value: 5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 04ca504048cf6564d9a2e9ab4b358fd9, type: 2}
@@ -495,6 +527,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
+  m_RootOrder: 0
 --- !u!1 &1652084775
 GameObject:
   m_ObjectHideFlags: 0
@@ -564,9 +597,8 @@ Renderer:
   m_UseLightProbes: 0
   m_LightProbeAnchor: {fileID: 0}
   m_ScaleInLightmap: 1
-  m_SortingLayer: 0
-  m_SortingOrder: 0
   m_SortingLayerID: 0
+  m_SortingOrder: 0
 --- !u!65 &1652084779
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -599,6 +631,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
+  m_RootOrder: 5
 --- !u!114 &1652084782
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -628,8 +661,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6deb2d41f53f4141ab82234f72276dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uNet: {fileID: 0}
   playerGuid: 
   type: 0
+  bufferItems: 0
 --- !u!1 &2137321651
 GameObject:
   m_ObjectHideFlags: 0
@@ -666,9 +701,8 @@ Renderer:
   m_UseLightProbes: 0
   m_LightProbeAnchor: {fileID: 0}
   m_ScaleInLightmap: 1
-  m_SortingLayer: 0
-  m_SortingOrder: 0
   m_SortingLayerID: 0
+  m_SortingOrder: 0
 --- !u!64 &2137321653
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -700,3 +734,4 @@ Transform:
   m_LocalScale: {x: 4.84982872, y: 1.94006371, z: 12.4973993}
   m_Children: []
   m_Father: {fileID: 0}
+  m_RootOrder: 2

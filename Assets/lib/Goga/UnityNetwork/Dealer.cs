@@ -8,21 +8,12 @@ namespace Goga.UnityNetwork {
         Player
     }
 
-    public class RPCCallObject {
-
-        public GameObject prefab;
-        public Vector3 pos;
-        public Quaternion rot;
-        public int groupId = 0;
-
-    }
-
     public class Dealer : MonoBehaviour {
 
         public Manager uNet;
         public GameObject prefabPlayer;
 
-        public List<RPCCallObject> rpcCallBuffer = new List<RPCCallObject>();
+        public List<RPCCallObject> rpcCallObjectBuffer = new List<RPCCallObject>();
 
 
         // Use this for initialization
@@ -40,6 +31,16 @@ namespace Goga.UnityNetwork {
             return null;
         }
 
+        public void SpreadNetObjRPCBuffersToPlayer(NetworkPlayer player) {
+
+            NetObject[] objs = FindObjectsOfType<NetObject>();
+
+            foreach (NetObject obj in objs) {
+                obj.SendBufferedRPCCallsToPlayer(player);
+            }
+
+        }
+
         [RPC]
         void InstantiateNetworkObject(int prefab, Vector3 pos, Quaternion rot, string playerId, NetworkViewID viewId) {
 
@@ -50,8 +51,6 @@ namespace Goga.UnityNetwork {
             GameObject _prefab = this.GetPrefab((PrefabType)prefab);
 
             GameObject _obj = Instantiate(_prefab, pos, rot) as GameObject;
-
-            Debug.Log("playerid:" + playerId);
 
             // set player name
             _obj.networkView.viewID = viewId;
@@ -84,9 +83,12 @@ namespace Goga.UnityNetwork {
             foreach (NetObject player in players) {
 
                 if (player.type == type) {
+                    
                     networkView.RPC("InstantiateNetworkObject", targetPlayer, (int)type, player.transform.position, player.transform.rotation, player.playerGuid, player.networkView.viewID);
+                    player.SendBufferedRPCCallsToPlayer(targetPlayer);
                 }
             }
+
         }
 
         void OnStateChange(NetworkPeerType peerType) {

@@ -6,19 +6,6 @@ using System.Collections.Generic;
 
 namespace Goga.UnityNetwork {
 
-    public class LobbyMessage {
-
-        public string author;
-        public string content;
-        public DateTime date;
-
-        public LobbyMessage(string content) {
-            this.content = content;
-            this.date = DateTime.Now;
-        }
-
-    }
-
     public class Chat : MonoBehaviour {
 
         private Manager uNet;
@@ -55,12 +42,21 @@ namespace Goga.UnityNetwork {
 
         void OnPlayerConnected(NetworkPlayer player) {
 
-            // send player all chat messages
-            foreach (LobbyMessage msg in lobbyChat) {
-
-                string _msg = this.uNet.jWriter.Write(msg);
-                networkView.RPC("GetLobbyChatMessage", player, _msg);
+            if (!enabled) {
+                return;
             }
+
+            if (!this.uNet.netPlayers.Exists(player.guid)) {
+
+                // send player all chat messages
+                foreach (LobbyMessage msg in lobbyChat) {
+
+                    string _msg = this.uNet.jWriter.Write(msg);
+                    networkView.RPC("GetLobbyChatMessage", player, _msg);
+                }
+
+            }
+
         }
 
     }

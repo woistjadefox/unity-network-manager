@@ -11,19 +11,17 @@ public enum PlayerColors {
 }
 
 [RequireComponent(typeof(NetObject))]
-
 public class PlayerEngine : MonoBehaviour {
 
     private NetObject uNetObj;
+
     public bool allowLocalMovement = true;
     public float walkSpeed = 3f;
     public bool showMoveCount = false;
 
     private PlayerMovementState movementState;
-
     private int _moveCount = 0;
   
-	// Use this for initialization
 	void Start () {
         this.uNetObj = this.GetComponent<NetObject>();
         renderer.material.color = Color.gray;
@@ -60,7 +58,6 @@ public class PlayerEngine : MonoBehaviour {
 
         if (Input.GetKeyDown("c")) {
 
-            Debug.Log("pressed c");
             this.ChangeColor((int)PlayerColors.Red);
         }
 
@@ -97,7 +94,6 @@ public class PlayerEngine : MonoBehaviour {
                 break;
 
             default:
-
                 break;
         }
 
@@ -126,44 +122,11 @@ public class PlayerEngine : MonoBehaviour {
 
         if (uNetObj.RoleObserver(data, true, false)) {
 
-            Debug.Log("whoop i show my move count");
+            // show move count
             this.showMoveCount = state;
         }
     }
 
-    /*
-    // client send movement input
-    void SendInput(PlayerMovementState state) {
-
-        if (Network.isClient) {
-
-            networkView.RPC("ReceiveInput", RPCMode.Server, (int)state);
-
-            if (this.allowLocalMovement) {
-                this.ReceiveInput((int)state);
-            }
-
-        }
-
-        if (Network.isServer) {
-            this.ReceiveInput((int)state);
-        }
-
-    }
-
-    // server: receive movementState of client
-    [RPC]
-    void ReceiveInput(int state) {
-
-        this.movementState = (PlayerMovementState)state;
-
-        this._moveCount++;
-        this.MovementStateMachine();
-
-    }
-    */
-
-    // change color
     [RPC]
     void ChangeColor(int color, int senderID = 0) {
 
@@ -194,7 +157,7 @@ public class PlayerEngine : MonoBehaviour {
         if (this.showMoveCount) {
             GUI.Box(new Rect(playerScreenPos.x, playerScreenPos.y, 100, 40), "moves:" + this._moveCount);
         } else {
-            GUI.Box(new Rect(playerScreenPos.x, playerScreenPos.y, 100, 40), this.uNetObj.GetManager().GetNetworkPlayer(this.uNetObj.playerGuid).name);
+            GUI.Box(new Rect(playerScreenPos.x, playerScreenPos.y, 100, 40), this.uNetObj.uNet.GetNetworkPlayer(this.uNetObj.playerGuid).name);
         }
 
     }

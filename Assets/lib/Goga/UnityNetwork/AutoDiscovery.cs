@@ -136,7 +136,7 @@ namespace Goga.UnityNetwork {
             this.serverHost.gameType = uNet.gameName;
             this.serverHost.gameName = uNet.GetActualHostLAN().gameName;
             this.serverHost.comment = uNet.GetActualHostLAN().comment;
-            this.serverHost.connectedPlayers = uNet.connectedPlayers.Count;
+            this.serverHost.connectedPlayers = uNet.netPlayers.GetList().Count;
             this.serverHost.playerLimit = uNet.GetActualHostLAN().playerLimit;
             this.serverHost.ip = this.GetLocalIPAddress();
             this.serverHost.port = uNet.serverPort;
