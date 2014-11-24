@@ -3,11 +3,7 @@ using System.Collections;
 using Goga.UnityNetwork;
 
 public enum PlayerMovementState {
-    Idle, Up, Down, Left, Right
-}
-
-public enum PlayerColors {
-    Red, Blue, Yellow, Green
+    Idle, Up, Down, Left, Right, Jump
 }
 
 [RequireComponent(typeof(NetObject))]
@@ -15,24 +11,26 @@ public class PlayerEngine : MonoBehaviour {
 
     private NetObject uNetObj;
 
+    public Animator animator;
     public bool allowLocalMovement = true;
     public float walkSpeed = 3f;
     public bool showMoveCount = false;
 
     private PlayerMovementState movementState;
+    private PlayerMovementState lastSendMove;
     private int _moveCount = 0;
   
 	void Start () {
+
         this.uNetObj = this.GetComponent<NetObject>();
-        renderer.material.color = Color.gray;
 	}
 
     void Update() {
 
-
         if (this.uNetObj.IsMine()) {
             this.CheckInput();
         }
+
     }
 
     void CheckInput() {
@@ -56,9 +54,8 @@ public class PlayerEngine : MonoBehaviour {
             this.SendInput((int)PlayerMovementState.Right);
         }
 
-        if (Input.GetKeyDown("c")) {
-
-            this.ChangeColor((int)PlayerColors.Red);
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            this.SendInput((int)PlayerMovementState.Jump);
         }
 
         if (Input.GetKeyDown("m")) {
@@ -70,6 +67,13 @@ public class PlayerEngine : MonoBehaviour {
             }
         }
 
+        if (!Input.anyKey) {
+
+            // send idle input only once after a action
+            if (this.lastSendMove != PlayerMovementState.Idle) {
+                this.SendInput((int)PlayerMovementState.Idle);
+            }
+        }
 
     }
 
@@ -78,27 +82,35 @@ public class PlayerEngine : MonoBehaviour {
         switch (movementState) {
 
             case PlayerMovementState.Up:
+                this.animator.SetBool("walk", true);
                 transform.position = transform.position + (new Vector3(0, 0, 1) * this.walkSpeed * Time.fixedDeltaTime);
                 break;
 
             case PlayerMovementState.Down:
+                this.animator.SetBool("walk", true);
                 transform.position = transform.position + (new Vector3(0, 0, -1) * this.walkSpeed * Time.fixedDeltaTime);
                 break;
 
             case PlayerMovementState.Left:
+                this.animator.SetBool("walk", true);
                 transform.position = transform.position + (new Vector3(-1, 0, 0) * this.walkSpeed * Time.fixedDeltaTime);
                 break;
 
             case PlayerMovementState.Right:
+                this.animator.SetBool("walk", true);
                 transform.position = transform.position + (new Vector3(1, 0, 0) * this.walkSpeed * Time.fixedDeltaTime);
                 break;
 
-            default:
+            case PlayerMovementState.Jump:
+                this.animator.SetBool("jump", true);
+                break;
+
+            case PlayerMovementState.Idle:
+                this.animator.SetBool("walk", false);
+                this.animator.SetBool("jump", false);
                 break;
         }
 
-        // always reset movement to idle
-        this.movementState = PlayerMovementState.Idle;
     }
 
     [RPC]
@@ -109,10 +121,12 @@ public class PlayerEngine : MonoBehaviour {
         if (uNetObj.RoleObserver(data, false, this.allowLocalMovement)) {
 
             this.movementState = (PlayerMovementState)state;
-
-            this._moveCount++;
             this.MovementStateMachine();
+
+            this.lastSendMove = (PlayerMovementState)state;
+            this._moveCount++;
         }
+
     }
 
     [RPC]
@@ -125,27 +139,6 @@ public class PlayerEngine : MonoBehaviour {
             // show move count
             this.showMoveCount = state;
         }
-    }
-
-    [RPC]
-    void ChangeColor(int color, int senderID = 0) {
-
-        object[] data = {color, senderID};
-
-        if (uNetObj.RoleObserver(data, true, false)) {
-
-            Color newColor = Color.gray;
-
-            switch (color) {
-                case 0: newColor = Color.red; break;
-                case 1: newColor = Color.blue; break;
-                case 2: newColor = Color.yellow; break;
-                case 3: newColor = Color.green; break;
-            }
-
-            renderer.material.color = newColor;
-
-        }        
     }
 
     void OnGUI() {

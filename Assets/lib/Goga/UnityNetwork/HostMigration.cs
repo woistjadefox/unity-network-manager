@@ -98,8 +98,6 @@ namespace Goga.UnityNetwork {
             if (!enabled) {
                 return;
             }
-
-            Debug.Log("HostMigration: Reconnect to the server done.. send rpc buffer from netObjects");
             
         }
     }

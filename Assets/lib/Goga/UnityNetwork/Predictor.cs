@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
-
+using System.Collections.Generic;
 
 namespace Goga.UnityNetwork {
 
@@ -24,8 +25,8 @@ namespace Goga.UnityNetwork {
             internal Vector3 angularVelocity;
         }
 
-        private PositionState[] m_BufferedState = new PositionState[30]; // We store twenty states with "playback" information
-        private int m_TimestampCount;     // Keep track of what slots are used
+        private PositionState[] m_BufferedState = new PositionState[20];
+        private int m_TimestampCount;   // Keep track of what slots are used
 
         Vector3 pos = Vector3.zero;
         Vector3 velocity = Vector3.zero;
@@ -33,7 +34,7 @@ namespace Goga.UnityNetwork {
         Vector3 angularVelocity = Vector3.zero;
 
         void Start() {
-            this.uNetObj = this.GetComponent<NetObject>();
+            this.uNetObj = GetComponent<NetObject>();
         }
 
         void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info) {
@@ -61,6 +62,11 @@ namespace Goga.UnityNetwork {
                     stream.Serialize(ref angularVelocity);
                 }
 
+                // check animations
+                if (this.uNetObj.netAnimator != null) {
+                    this.uNetObj.netAnimator.UpdateValues(stream);
+                }
+
                 // Read data from remote client
             } else {
 
@@ -70,6 +76,11 @@ namespace Goga.UnityNetwork {
                 if (rigidbody) {
                     stream.Serialize(ref velocity);
                     stream.Serialize(ref angularVelocity);
+                }
+
+                // check animations
+                if (this.uNetObj.netAnimator != null) {
+                    this.uNetObj.netAnimator.UpdateValues(stream);
                 }
 
                 // Shift the buffer sideways, deleting state 20

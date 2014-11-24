@@ -12,10 +12,12 @@ namespace Goga.UnityNetwork {
 
         [HideInInspector]
         public Manager uNet;
+        [HideInInspector]
+        public AnimationSynchronizer netAnimator;
 
         public string playerGuid;
+        [HideInInspector]
         public NetworkPrefabs type;
-        public int bufferItems = 0;
 
         private StackFrame _frame;
         private string _callerMethod;
@@ -24,13 +26,21 @@ namespace Goga.UnityNetwork {
         public MaxStack<RPCCall> rpcCallBuffer = new MaxStack<RPCCall>(50);
 
         void Awake() {
-
             Network.isMessageQueueRunning = false;
         }
 
         void Start() {
+
+            // get manager
             this.uNet = FindObjectOfType<Manager>();
             this.uNet.newState += new ChangedCliendState(OnStateChange);
+
+            // check if netanimator is attached
+            this.netAnimator = GetComponent<AnimationSynchronizer>();
+            if (!this.netAnimator || !this.netAnimator.enabled) {
+                this.netAnimator = null;
+            }
+
             Network.isMessageQueueRunning = true;
         }
 
@@ -58,6 +68,10 @@ namespace Goga.UnityNetwork {
             foreach(RPCCall call in rpcCallBuffer){
                 networkView.RPC(call.method, player, call.data);
             }
+        }
+
+        public RPCCall GetLastRPCCall() {
+            return rpcCallBuffer.Peek();
         }
 
         public bool IsMine() {
@@ -129,11 +143,6 @@ namespace Goga.UnityNetwork {
             }
 
             return false;
-        }
-
-        void FixedUpdate() {
-
-            this.bufferItems = this.rpcCallBuffer.Count;
         }
 
         void OnStateChange(NetworkPeerType peerType) {
