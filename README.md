@@ -15,7 +15,7 @@ Features:
 - Own RPC Buffer System (Framework does not work with Network.Instantiate and Unity RPCBuffers)
 
 Requirements: 
-- Unity 4.x Free or Pro
+- Unity 4.3.x Free or Pro
 - LAN Autodiscovery on iOS & Android requires Unity iOS / Android Pro License (.NET Socket is used for this feature). 
 - LAN Autodiscovery doesn't work in Webplayer since Webplayer can't send UDP Broadcasts (Sandbox Security Issue)
 - For real time games on iOS & Android & punch through function a Wi-Fi connection on iOS & Android is highly recommended
