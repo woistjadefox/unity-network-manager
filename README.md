@@ -5,14 +5,13 @@ A simple network framework for the build-in RakNet client in Unity 4.x.
 
 Features: 
 - Authoritative Server Structure
-- Lobby with Chat
-- Manager takes care of playername changes and ready state changes
-- RPC function observer (Observer takes care about Server/Client code)
+- Matchmaking Lobby with Chat
+- RPC Observer (Observer takes care about Server/Client code)
+- Transform & Rigidbody Replication
 - Simple Prediction (Interpolation & Extrapolation)
-- Rigidbody support
-- Mecanim Animation Synchronizer 
+- Mecanim Replication
 - LAN Autodiscovery for local network games
-- Host Migration (beta state)
+- Automated Host Migration (if the host player disconnects, another client will take over server role)
 - Own RPC Buffer System (Framework does not work with Network.Instantiate and Unity RPCBuffers)
 
 Requirements: 
