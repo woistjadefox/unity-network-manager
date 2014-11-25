@@ -25,7 +25,9 @@ namespace Goga.UnityNetwork {
             if (message != "") {
 
                 LobbyMessage msg = new LobbyMessage(message);
+                msg.guid = this.uNet.GetNetworkPlayer().guid;
                 msg.author = this.uNet.playerName;
+
 
                 string _msg = this.uNet.jWriter.Write(msg);
 

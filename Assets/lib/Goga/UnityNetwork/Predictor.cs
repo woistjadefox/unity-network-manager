@@ -33,7 +33,7 @@ namespace Goga.UnityNetwork {
         Quaternion rot = Quaternion.identity;
         Vector3 angularVelocity = Vector3.zero;
 
-        void Start() {
+        void Awake() {
             this.uNetObj = GetComponent<NetObject>();
         }
 

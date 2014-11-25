@@ -26,10 +26,8 @@ namespace Goga.UnityNetwork {
         public MaxStack<RPCCall> rpcCallBuffer = new MaxStack<RPCCall>(50);
 
         void Awake() {
-            Network.isMessageQueueRunning = false;
-        }
 
-        void Start() {
+            Network.isMessageQueueRunning = false;
 
             // get manager
             this.uNet = FindObjectOfType<Manager>();
@@ -40,7 +38,9 @@ namespace Goga.UnityNetwork {
             if (!this.netAnimator || !this.netAnimator.enabled) {
                 this.netAnimator = null;
             }
+        }
 
+        void Start() {
             Network.isMessageQueueRunning = true;
         }
 

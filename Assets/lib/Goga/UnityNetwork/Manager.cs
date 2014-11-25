@@ -238,7 +238,7 @@ namespace Goga.UnityNetwork {
         void FixedUpdate() {
 
             // check if all players are ready
-            if (Network.peerType == NetworkPeerType.Server) {
+            if (Network.isServer || Network.isClient) {
 
                 if (this.AllPlayersReadyCheck()) {
 
@@ -293,19 +293,25 @@ namespace Goga.UnityNetwork {
         // check if all palyers are ready
         bool AllPlayersReadyCheck() {
 
+            foreach (NetPlayer player in this.netPlayers.GetList()) {
+
+                if (!player.ready) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // check if server is full
+        public bool IsServerFull() {
+
             if (this.isLanOnly) {
                 if (this.GetActualHostLAN().playerLimit != this.netPlayers.GetList().Count) {
                     return false;
                 }
             } else {
                 if (this.GetActualHost().playerLimit != this.netPlayers.GetList().Count) {
-                    return false;
-                }
-            }
-
-            foreach (NetPlayer player in this.netPlayers.GetList()) {
-
-                if (!player.ready) {
                     return false;
                 }
             }
@@ -354,6 +360,20 @@ namespace Goga.UnityNetwork {
 
             if (!this.netPlayers.Exists(Network.player.guid)) {
                 this.netPlayers.Add(_serverHost);
+            }
+
+        }
+
+        // to change settings for master server
+        public void ReregisterServer(HostData host) {
+
+            // not implemented yet
+        }
+
+        public void ChangePlayerLimit(int size) {
+
+            if (Network.isServer) {
+                Network.maxConnections = size;
             }
 
         }
