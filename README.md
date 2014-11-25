@@ -37,4 +37,3 @@ Check the example in the scene Assets/workspace/demo/scenes/Lobby.unity
 ####Copyright & license:
 ***
 Code released under [the Apache License 2.0](LICENSE).
-Framework is using JsonFX for some serialization work
