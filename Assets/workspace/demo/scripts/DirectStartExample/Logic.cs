@@ -31,8 +31,10 @@ public class Logic : MonoBehaviour {
 
         if (!this.IsGameRunning()) {
 
-            Debug.Log("SERVER: start game");
+            Debug.Log("ready to play..! ");
             this.gameRunning = true;
+
+            this.InstantiateMyPlayer();
         }
 
     }
@@ -46,9 +48,28 @@ public class Logic : MonoBehaviour {
 
         switch (peerType) {
 
+            case NetworkPeerType.Server:
+
+                if (!this.IsGameRunning()) {
+                    this.StartGame();
+                }
+
+                break;
+
+            case NetworkPeerType.Client:
+
+                if (!this.IsGameRunning()) {
+                    this.StartGame();
+                }
+
+                break;
+
             case NetworkPeerType.Disconnected:
 
-                this.gameRunning = false;
+                if (!this.uNet.isReconnecting) {
+                    this.gameRunning = false;
+                }
+
                 break;
         }
 

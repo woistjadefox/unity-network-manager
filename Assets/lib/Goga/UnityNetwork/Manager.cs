@@ -245,7 +245,10 @@ namespace Goga.UnityNetwork {
                     if (!allPlayersReady) {
 
                         this.allPlayersReady = true;
-                        this.onAllPlayersReady();
+
+                        if (this.onAllPlayersReady != null) {
+                            this.onAllPlayersReady();
+                        }
                     }
 
                 } else {
@@ -382,10 +385,14 @@ namespace Goga.UnityNetwork {
 
             this._isDisconnecting = true;
 
-            Network.Disconnect(200);
+            Network.Disconnect();
 
             if (Network.peerType == NetworkPeerType.Server) {
                 MasterServer.UnregisterHost();
+            }
+
+            if (this.isOnline) {
+                this.UpdateHostList();
             }
         }
 
@@ -397,7 +404,10 @@ namespace Goga.UnityNetwork {
         }
 
         public void ConnectPeerLAN(HostDataLAN host) {
+
             this.SetIsConnecting(true);
+            this.isLanOnly = true;
+
             Network.Connect(host.ip, host.port);
             this.SetActualHostLAN(host);
         }
@@ -408,6 +418,8 @@ namespace Goga.UnityNetwork {
 
 
             if (this.isLanOnly) {
+
+                this.isLanOnly = true;
                 Network.Connect(this.GetUnityNetworkPlayer(guid).ipAddress, this.serverPort);
 
             } else {
@@ -523,9 +535,11 @@ namespace Goga.UnityNetwork {
                 this.SetActualHost(null);
                 this.SetActualHostLAN(null);
                 this.isLanOnly = false;
+
+                Debug.Log("CleanUp done..");
             }
 
-            Debug.Log("CleanUp done..");
+
         }
 
         void RemoveAllNetworkObjects() {

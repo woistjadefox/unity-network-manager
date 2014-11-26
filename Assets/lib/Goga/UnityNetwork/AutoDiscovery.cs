@@ -219,7 +219,7 @@ namespace Goga.UnityNetwork {
                 } else {
 
                     // add host to list
-                    Debug.Log("new host:" + _receivedHost.gameName);
+                    //Debug.Log("new host:" + _receivedHost.gameName);
                     this.lobbyListLAN.Add(_receivedHost);
 
                 }

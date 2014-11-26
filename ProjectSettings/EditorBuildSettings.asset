@@ -6,6 +6,10 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/workspace/demo/scenes/Lobby.unity
+    path: Assets/workspace/demo/scenes/DirectStartExample.unity
+  - enabled: 0
+    path: Assets/workspace/demo/scenes/ReadyStartExample.unity
+  - enabled: 0
+    path: Assets/workspace/demo/scenes/ReadyStartExample.unity
   - enabled: 1
-    path: Assets/workspace/demo/scenes/ReadyExample.unity
+    path: Assets/workspace/demo/scenes/ReadyStartExample.unity

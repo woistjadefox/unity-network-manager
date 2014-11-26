@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Goga.UnityNetwork;
 
 
-public class LogicReadyExample : MonoBehaviour {
+public class LogicReadyStart : MonoBehaviour {
 
     public Manager uNet;
     public GameObject prefabPlayer;
@@ -59,8 +59,8 @@ public class LogicReadyExample : MonoBehaviour {
             // set player limit to actual ammount
             this.uNet.ChangePlayerLimit(this.uNet.netPlayers.GetList().Count - 1);
         }
-
     }
+
 
     void OnStateChange(NetworkPeerType peerType) {
 

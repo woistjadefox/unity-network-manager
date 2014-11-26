@@ -5,7 +5,7 @@ using Goga.UnityNetwork;
 public class ReadyHandler : MonoBehaviour {
 
     private Manager uNet;
-    public LogicReadyExample logic;
+    public LogicReadyStart logic;
     public bool onlyStartIfFull = false;
     public int minimumPlayers = 2;
 

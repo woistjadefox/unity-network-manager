@@ -91,7 +91,6 @@ public class Lobby : MonoBehaviour {
     public void Disconnect() {
         this.joinedLanGame = false;
         uNet.DisconnectPeer();
-        uNet.UpdateHostList();
     }
     #endregion
 
@@ -216,12 +215,20 @@ public class Lobby : MonoBehaviour {
 
             if (uNet.isOnline) {
 
+                GUILayout.BeginHorizontal();
+
                 // internet hosts
                 if (uNet.GetLobbyList().Length > 0) {
                     GUILayout.Label("Available Internet Games");
                 } else {
                     GUILayout.Label("No open Internet Games available");
                 }
+
+                if (GUILayout.Button("refresh", GUILayout.MaxWidth(80))) {
+                    uNet.UpdateHostList();
+                }
+
+                GUILayout.EndHorizontal();
 
                 if (lobbyWin.height > 200) {
                     lobbyScrollPosition = GUILayout.BeginScrollView(lobbyScrollPosition, GUILayout.MinHeight(200));
@@ -258,27 +265,30 @@ public class Lobby : MonoBehaviour {
 
             foreach (HostDataLAN host in uNet.discovery.GetLanHostData()) {
 
-                GUILayout.BeginHorizontal();
+                try {
+                    GUILayout.BeginHorizontal();
 
-                GUILayout.Box("<b>" + host.gameName + "</b>");
+                    GUILayout.Box("<b>" + host.gameName + "</b>");
 
-                if (host.comment != "") {
-                    GUILayout.Box("<b>" + host.comment + "</b>");
-                }
-
-                GUILayout.Box("<b>" + host.connectedPlayers + " / " + host.playerLimit + "</b>", GUILayout.MaxWidth(50));
-
-                if (uNet.GetPeerType() == NetworkPeerType.Disconnected && !uNet.isConnecting && host.connectedPlayers < host.playerLimit) {
-                    if (GUILayout.Button("join", GUILayout.MaxWidth(80))) {
-                        this.JoinLAN(host);
+                    if (host.comment != "") {
+                        GUILayout.Box("<b>" + host.comment + "</b>");
                     }
+
+                    GUILayout.Box("<b>" + host.connectedPlayers + " / " + host.playerLimit + "</b>", GUILayout.MaxWidth(50));
+
+                    if (uNet.GetPeerType() == NetworkPeerType.Disconnected && !uNet.isConnecting && host.connectedPlayers < host.playerLimit) {
+                        if (GUILayout.Button("join", GUILayout.MaxWidth(80))) {
+                            this.JoinLAN(host);
+                        }
+                    }
+
+                    GUILayout.EndHorizontal();
+                
+                } catch (System.ArgumentException e) {
+                    e.Equals(null);
                 }
-
-                GUILayout.EndHorizontal();
+               
             }
-
-
-
 
             if (lobbyWin.height > 200) {
                 GUILayout.EndScrollView();
@@ -459,7 +469,11 @@ public class Lobby : MonoBehaviour {
             case NetworkPeerType.Disconnected:
 
                 this._chatCounter = 0;
-                this.joinedLanGame = false;
+
+                if (!this.uNet.isReconnecting) {
+                    this.joinedLanGame = false;
+                }
+
                 break;
         }
 

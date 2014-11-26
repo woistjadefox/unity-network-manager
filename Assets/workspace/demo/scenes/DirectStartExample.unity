@@ -1005,7 +1005,6 @@ GameObject:
   m_Component:
   - 4: {fileID: 884516700}
   - 114: {fileID: 884516699}
-  - 114: {fileID: 884516701}
   m_Layer: 0
   m_Name: _Lobby
   m_TagString: Untagged
@@ -1024,7 +1023,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3fbd135874c51184f8d54446b08e2154, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  logic: {fileID: 1508230334}
   minPlayers: 2
   maxPlayers: 32
   defaultPlayerSize: 2
@@ -1042,19 +1040,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
---- !u!114 &884516701
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 884516698}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bdf81bb2aed97334ba0a83ac09a35776, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  logic: {fileID: 1508230334}
-  onlyStartIfFull: 1
 --- !u!1 &900644822
 GameObject:
   m_ObjectHideFlags: 0
