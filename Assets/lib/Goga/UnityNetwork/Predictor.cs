@@ -177,8 +177,14 @@ namespace Goga.UnityNetwork {
                             t = (float)((interpolationTime - lhs.timestamp) / length);
 
                         // if t=0 => lhs is used directly
-                        transform.localPosition = Vector3.Lerp(lhs.pos, rhs.pos, t);
-                        transform.localRotation = Quaternion.Slerp(lhs.rot, rhs.rot, t);
+                        if (rigidbody == null) {
+                            transform.localPosition = Vector3.Lerp(lhs.pos, rhs.pos, t);
+                            transform.localRotation = Quaternion.Slerp(lhs.rot, rhs.rot, t);
+                        } else {
+                            rigidbody.position = Vector3.Lerp(lhs.pos, rhs.pos, t);
+                            rigidbody.rotation = Quaternion.Slerp(lhs.rot, rhs.rot, t);
+                        }
+
                         return;
                     }
                 }
