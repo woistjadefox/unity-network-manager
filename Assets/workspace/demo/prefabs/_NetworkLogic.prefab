@@ -13,7 +13,7 @@ GameObject:
   - 114: {fileID: 11400002}
   - 114: {fileID: 11400008}
   - 114: {fileID: 11400010}
-  - 114: {fileID: 11400006}
+  - 114: {fileID: 11400004}
   m_Layer: 0
   m_Name: _NetworkLogic
   m_TagString: Untagged
@@ -44,6 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c1772bea93e5d246a3405800f0c9d14, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  securityOn: 0
+  sendRate: 30
   serverPort: 25002
   gameName: myVeryFunnyGame
   playerName: 
@@ -72,7 +74,7 @@ MonoBehaviour:
   remotePort: 19784
   sendRate: 3
   timeoutThreshold: 5
---- !u!114 &11400006
+--- !u!114 &11400004
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}

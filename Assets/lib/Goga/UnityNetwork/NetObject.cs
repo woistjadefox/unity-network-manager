@@ -139,10 +139,30 @@ namespace Goga.UnityNetwork {
 
             if (!allowLocalAction && senderID == 1) {
                 return true;
+            }
 
+            // check if you are connected anyways
+            if (Network.peerType == NetworkPeerType.Disconnected) {
+                return true;
             }
 
             return false;
+        }
+
+        public void ActivateMyCamera(Camera myCamera) {
+
+            foreach (Camera _camera in FindObjectsOfType<Camera>()) {
+                _camera.gameObject.SetActive(false);
+            }
+
+            myCamera.gameObject.SetActive(true);
+        }
+
+        public void DisableAllColliders() {
+
+            foreach (Collider collider in transform.GetComponentsInChildren<Collider>()) {
+                collider.enabled = false;
+            }
         }
 
         void OnStateChange(NetworkPeerType peerType) {

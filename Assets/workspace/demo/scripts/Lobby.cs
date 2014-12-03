@@ -10,13 +10,16 @@ public class Lobby : MonoBehaviour {
     private Manager uNet;
 
     // settings
+    public bool allowPasswordProtection = true;
     public int minPlayers = 2;
     public int maxPlayers = 32;
     public int defaultPlayerSize = 2;
 
     // lobby window
-    public int paddingLeft = 120;
-    public int paddingTop = 10;
+    [HideInInspector]
+    private int paddingLeft = 10;
+    [HideInInspector]
+    private int paddingTop = 10;
 
     #region temp vars
     private bool showLobby = true;
@@ -225,6 +228,7 @@ public class Lobby : MonoBehaviour {
                 }
 
                 if (GUILayout.Button("refresh", GUILayout.MaxWidth(80))) {
+
                     uNet.UpdateHostList();
                 }
 

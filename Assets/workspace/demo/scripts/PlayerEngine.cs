@@ -2,6 +2,7 @@
 using System.Collections;
 using Goga.UnityNetwork;
 
+
 public enum PlayerMovementState {
     Idle, Up, Down, Left, Right, Jump
 }
@@ -116,7 +117,7 @@ public class PlayerEngine : MonoBehaviour {
     [RPC]
     void SendInput(int state, int senderID = 0) {
 
-        object[] data = { state, senderID };
+        object[] data = { state, senderID };   
 
         if (uNetObj.RoleObserver(data, false, this.allowLocalMovement)) {
 

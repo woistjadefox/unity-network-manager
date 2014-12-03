@@ -13,8 +13,11 @@ namespace Goga.UnityNetwork {
     [RequireComponent(typeof(NetworkView))]
     public class Manager : MonoBehaviour {
 
+        public bool securityOn = false;
+        public int sendRate = 30;
         public int serverPort = 25002;
         public string gameName;
+        [HideInInspector]
         public string playerName;
         public string onlineCheckIp = "8.8.8.8"; // google dns server
         public float onlineCheckRate = 10f;
@@ -54,11 +57,16 @@ namespace Goga.UnityNetwork {
 
             Application.runInBackground = true;
 
+            // set sendRate
+            Network.sendRate = this.sendRate;
+
             // clear hostlist
             MasterServer.ClearHostList();
 
             // set security
-            Network.InitializeSecurity();
+            if (this.securityOn) {
+                Network.InitializeSecurity();
+            }
 
             // create empty lobbylist
             lobbyList = new HostData[]{};
@@ -260,7 +268,7 @@ namespace Goga.UnityNetwork {
         // get new hostlist data from master server
         public void UpdateHostList() {
 
-            if (this.isOnline) { 
+            if (this.isOnline) {
 
                 // get list from masterserver
                 MasterServer.RequestHostList(this.gameName);

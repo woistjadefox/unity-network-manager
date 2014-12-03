@@ -51,7 +51,15 @@ namespace Goga.UnityNetwork {
 
             this.uNet = GetComponent<Manager>();
             this.uNet.newState += new ChangedCliendState(OnStateChange);
+            
+            StartCoroutine(StartDelay());
+        }
+
+        IEnumerator StartDelay() {
+
+            yield return new WaitForSeconds(1);
             this.StartReceivingIp();
+
         }
 
         void FixedUpdate() {
@@ -59,7 +67,6 @@ namespace Goga.UnityNetwork {
             // clean up lobby list every second
             if (Time.frameCount % 60 == 0) {
                 this.CleanUpLobbyList();
-                //Debug.Log("lan entries:" + this.lobbyListLAN.Count);
             }
         }
 
@@ -117,7 +124,7 @@ namespace Goga.UnityNetwork {
             // start to broadcast message
             InvokeRepeating("SendBroadcast", 0, this.sendRate);
 
-            Debug.Log("UnityNetworkDiscovery:start start sending ip from this host..");
+            Debug.Log("Goga.UnityNetwork.AutoDiscovery: start sharing host dat to LAN.");
         }
 
         private void StopBroadcastIp() {
@@ -155,17 +162,25 @@ namespace Goga.UnityNetwork {
         
         #region client receiving signal
         public void StartReceivingIp() {
-            try {
-                if (receiver == null) {
+
+            if (receiver == null) {
+
+                try {
                     receiver = new UdpClient(remotePort);
                     receiver.BeginReceive(new AsyncCallback(ReceiveBroadcast), null);
 
-                    Debug.Log("UnityNetworkDiscovery:start receivingIp from servers..");
+                    Debug.Log("Goga.UnityNetwork.AutoDiscovery: start receiving hosts from LAN servers");
+
+                } catch (SocketException e) {
+
+                    if (e.SocketErrorCode == SocketError.AddressAlreadyInUse) {
+                        Debug.LogWarning("Goga.UnityNetwork.AutoDiscovery: port " + remotePort + " is already in use!");
+                    }
+        
                 }
+
             }
-            catch (SocketException e) {
-                Debug.Log(e.Message);
-            }
+
         }
 
         private void StopReceivingIp() {
@@ -219,7 +234,6 @@ namespace Goga.UnityNetwork {
                 } else {
 
                     // add host to list
-                    //Debug.Log("new host:" + _receivedHost.gameName);
                     this.lobbyListLAN.Add(_receivedHost);
 
                 }
