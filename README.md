@@ -20,12 +20,10 @@ Requirements:
 - LAN Autodiscovery doesn't work in Webplayer since Webplayer can't send UDP Broadcasts (Sandbox Security Issue)
 - For real time games on iOS & Android & punch through function a Wi-Fi connection on iOS & Android is highly recommended
 
-####Installation:
-***
+#### Installation:
 Check the example in the scene Assets/workspace/demo/scenes/Lobby.unity
 
-####Still in development / Todo:
-***
+#### Still in development / Todo:
 - Protect created host server with a password:
   - pw textfield for host create form
   - pw textfield for join host 
@@ -34,6 +32,5 @@ Check the example in the scene Assets/workspace/demo/scenes/Lobby.unity
 - Scrollbar for all connected players in the actual game window
 - Connection retry if NAT punchthrough doesn't work the first time
 
-####Copyright & license:
-***
+#### Copyright & license:
 Code released under [the Apache License 2.0](LICENSE).
